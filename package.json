@@ -1,0 +1,21 @@
+{
+  "name": "vod-to-live.js",
+  "version": "0.1.0",
+  "description": "HLS VOD to HLS Live",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "dev-server": "$(npm bin)/nodemon server.js"
+  },
+  "author": "Jonas Rydholm Birmé <jonas.birme@eyevinn.se>",
+  "license": "MIT",
+  "dependencies": {
+    "crypto": "^1.0.1",
+    "m3u8": "0.0.7",
+    "request": "^2.83.0",
+    "restify": "^6.3.4"
+  },
+  "devDependencies": {
+    "nodemon": "^1.15.0"
+  }
+}
