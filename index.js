@@ -8,6 +8,7 @@ class HLSVod {
     this.mediaSequences = [];
     this.SEQUENCE_DURATION = 60;
     this.targetDuration = {};
+    this.previousVod = null;
   }
 
   load() {
@@ -37,8 +38,22 @@ class HLSVod {
     });
   }
 
+  loadAfter(previousVod) {
+    this.previousVod = previousVod;
+    this._loadPrevious();
+    return this.load();
+  }
+
+  getLiveMediaSequenceSegments(seqIdx) {
+    return this.mediaSequences[seqIdx].segments;
+  }
+
   getBandwidths() {
     return Object.keys(this.segments);
+  }
+
+  getLiveMediaSequencesCount() {
+    return this.mediaSequences.length;
   }
 
   getLiveMediaSequences(offset, bandwidth, seqIdx) {
@@ -46,13 +61,31 @@ class HLSVod {
     m3u8 += "#EXT-X-VERSION:3\n";
     m3u8 += "#EXT-X-TARGETDURATION:" + this.targetDuration[bandwidth] + "\n";
     m3u8 += "#EXT-X-MEDIA-SEQUENCE:" + (offset + seqIdx) + "\n";
-    //m3u8 += "#EXT-X-PLAYLIST-TYPE:EVENT\n";
     this.mediaSequences[seqIdx].segments[bandwidth].forEach(v => {
-      m3u8 += "#EXTINF:" + v[0] + "\n";
-      m3u8 += v[1] + "\n";
+      if (v[0] !== -1) {
+        m3u8 += "#EXTINF:" + v[0] + "\n";
+        m3u8 += v[1] + "\n";
+      } else {
+        m3u8 += "#EXT-X-DISCONTINUITY\n";
+      }
     });
 
     return m3u8;
+  }
+
+  _loadPrevious() {
+    const previousVodSeqCount = this.previousVod.getLiveMediaSequencesCount();
+    const bandwidths = this.previousVod.getBandwidths();
+    bandwidths.forEach(bw => {
+      const lastMediaSequence = this.previousVod.getLiveMediaSequenceSegments(previousVodSeqCount - 1)[bw];
+      if (!this.segments[bw]) {
+        this.segments[bw] = [];
+      }
+      for(let idx = 1; idx < lastMediaSequence.length; idx++) {
+        this.segments[bw].push(lastMediaSequence[idx]);
+      }
+      this.segments[bw].push([-1, '']);
+    });
   }
 
   _createMediaSequences() {
@@ -63,7 +96,9 @@ class HLSVod {
       const bw = Object.keys(this.segments)[0];
       let sequence = {};
       while (segIdx != this.segments[bw].length) {
-        duration += this.segments[bw][segIdx][0];
+        if (this.segments[bw][segIdx][0] !== -1) {
+          duration += this.segments[bw][segIdx][0];
+        }
         if (duration < this.SEQUENCE_DURATION) {
           Object.keys(this.segments).forEach(bwIdx => {
             const v = {};
@@ -90,24 +125,39 @@ class HLSVod {
   _loadMediaManifest(mediaManifestUri, bandwidth) {
     return new Promise((resolve, reject) => {
       const parser = m3u8.createStream();
+      let bw = bandwidth;
       if (!this.segments[bandwidth]) {
-        this.segments[bandwidth] = [];
+        if (this.previousVod) {
+          // Find a close bw initiated from previous vod
+          bw = this._getNearestBandwidth(bandwidth);
+        } else {
+          this.segments[bw] = [];
+        }
       }
 
       parser.on('m3u', m3u => {
         m3u.items.PlaylistItem.forEach(playlistItem => {
-          this.segments[bandwidth].push([
+          this.segments[bw].push([
             playlistItem.properties.duration,
             playlistItem.properties.uri
           ]);
         });
-        this.targetDuration[bandwidth] = this.segments[bandwidth].map(el => el[0]).reduce((max, cur) => Math.max(max, cur), -Infinity);
+        this.targetDuration[bw] = this.segments[bw].map(el => el[0]).reduce((max, cur) => Math.max(max, cur), -Infinity);
         resolve();
       });
 
       request.get(mediaManifestUri)
       .pipe(parser);
     });
+  }
+
+  _getNearestBandwidth(bandwidth) {
+    const availableBandwidths = Object.keys(this.segments).sort((a,b) => b - a);
+    for (let i = 0; i < availableBandwidths.length; i++) {
+      if (bandwidth > availableBandwidths[i]) {
+        return availableBandwidths[i];
+      }
+    }
   }
 }
 
