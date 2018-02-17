@@ -57,11 +57,12 @@ class HLSVod {
   }
 
   getLiveMediaSequences(offset, bandwidth, seqIdx) {
+    const bw = this._getNearestBandwidth(bandwidth);
     let m3u8 = "#EXTM3U\n";
     m3u8 += "#EXT-X-VERSION:3\n";
-    m3u8 += "#EXT-X-TARGETDURATION:" + this.targetDuration[bandwidth] + "\n";
+    m3u8 += "#EXT-X-TARGETDURATION:" + this.targetDuration[bw] + "\n";
     m3u8 += "#EXT-X-MEDIA-SEQUENCE:" + (offset + seqIdx) + "\n";
-    this.mediaSequences[seqIdx].segments[bandwidth].forEach(v => {
+    this.mediaSequences[seqIdx].segments[bw].forEach(v => {
       if (v[0] !== -1) {
         m3u8 += "#EXTINF:" + v[0] + "\n";
         m3u8 += v[1] + "\n";
@@ -154,7 +155,7 @@ class HLSVod {
   _getNearestBandwidth(bandwidth) {
     const availableBandwidths = Object.keys(this.segments).sort((a,b) => b - a);
     for (let i = 0; i < availableBandwidths.length; i++) {
-      if (bandwidth > availableBandwidths[i]) {
+      if (bandwidth >= availableBandwidths[i]) {
         return availableBandwidths[i];
       }
     }
