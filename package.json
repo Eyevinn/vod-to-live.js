@@ -4,7 +4,7 @@
   "description": "HLS VOD to HLS Live",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
+    "test": "exit 0",
     "doc": "$(npm bin)/jsdoc2md index.js > API.md",
     "build": "npm run doc",
     "dev-server": "$(npm bin)/nodemon server.js",
