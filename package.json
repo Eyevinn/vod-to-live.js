@@ -1,6 +1,6 @@
 {
   "name": "vod-to-live.js",
-  "version": "0.1.2",
+  "version": "0.1.3",
   "description": "HLS VOD to HLS Live",
   "main": "index.js",
   "scripts": {
