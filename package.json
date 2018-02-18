@@ -5,7 +5,11 @@
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "dev-server": "$(npm bin)/nodemon server.js"
+    "doc": "$(npm bin)/jsdoc2md index.js > API.md",
+    "build": "npm run doc",
+    "dev-server": "$(npm bin)/nodemon server.js",
+    "version": "npm run build && git add API.md",
+    "postversion": "git push && git push --tags"
   },
   "author": "Jonas Rydholm Birmé <jonas.birme@eyevinn.se>",
   "license": "MIT",
@@ -16,6 +20,7 @@
     "restify": "^6.3.4"
   },
   "devDependencies": {
+    "jsdoc-to-markdown": "^4.0.1",
     "nodemon": "^1.15.0"
   }
 }

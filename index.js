@@ -2,6 +2,10 @@ const m3u8 = require('m3u8');
 const request = require('request');
 
 class HLSVod {
+  /**
+   * Create an HLS VOD instance
+   * @param {string} vodManifestUri - the uri to the master manifest of the VOD
+   */
   constructor(vodManifestUri) {
     this.masterManifestUri = vodManifestUri;
     this.segments = {};
@@ -11,6 +15,9 @@ class HLSVod {
     this.previousVod = null;
   }
 
+  /**
+   * Load and parse the HLS VOD
+   */
   load() {
     return new Promise((resolve, reject) => {
       const parser = m3u8.createStream();
@@ -38,24 +45,48 @@ class HLSVod {
     });
   }
 
+  /**
+   * Load and parse the HLS VOD where the first media sequences
+   * contains the end sequences of the previous VOD
+   * 
+   * @param {HLSVod} previousVod - the previous VOD to concatenate to
+   */
   loadAfter(previousVod) {
     this.previousVod = previousVod;
     this._loadPrevious();
     return this.load();
   }
 
+  /**
+   * Get all segments (duration, uri) for a specific media sequence
+   * 
+   * @param {number} seqIdx - media sequence index (first is 0)
+   */
   getLiveMediaSequenceSegments(seqIdx) {
     return this.mediaSequences[seqIdx].segments;
   }
 
+  /**
+   * Get the available bandwidths for this VOD
+   */
   getBandwidths() {
     return Object.keys(this.segments);
   }
 
+  /**
+   * Get the number of media sequences for this VOD
+   */
   getLiveMediaSequencesCount() {
     return this.mediaSequences.length;
   }
 
+  /**
+   * Get the HLS live media sequence for a specific media sequence and bandwidth
+   * 
+   * @param {number} offset - add this offset to all media sequences in the EXT-X-MEDIA-SEQUENCE tag
+   * @param {string} bandwidth
+   * @param {number} seqIdx 
+   */
   getLiveMediaSequences(offset, bandwidth, seqIdx) {
     const bw = this._getNearestBandwidth(bandwidth);
     let m3u8 = "#EXTM3U\n";
