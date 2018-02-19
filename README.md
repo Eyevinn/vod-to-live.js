@@ -97,7 +97,7 @@ live HLS stream.
     $ npm install --save vod-to-live
 
 ```
-const HLSVod = require('vod-to-live');
+const HLSVod = require('vod-to-live.js');
 const vod = new HLSVod('https://example.com/vod.m3u8');
 const vod2 = new HLSVod('https://example.com/vod2.m3u8');
 vod.load().then(() => {
@@ -109,7 +109,7 @@ vod.load().then(() => {
 }).catch(console.error);
 ```
 
-More details in the [API documentation](API.md)
+More details in the [API documentation](https://github.com/Eyevinn/vod-to-live.js/blob/master/API.md)
 
 ## Development
 

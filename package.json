@@ -2,10 +2,12 @@
   "name": "vod-to-live.js",
   "version": "0.1.3",
   "description": "HLS VOD to HLS Live",
+  "repository": "https://github.com/Eyevinn/vod-to-live.js",
   "main": "index.js",
   "scripts": {
     "test": "$(npm bin)/jasmine",
     "doc": "$(npm bin)/jsdoc2md index.js > API.md",
+    "prebuild": "npm test",
     "build": "npm run doc",
     "dev-server": "$(npm bin)/nodemon server.js",
     "version": "npm run build && git add API.md",
