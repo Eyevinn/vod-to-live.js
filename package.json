@@ -4,7 +4,7 @@
   "description": "HLS VOD to HLS Live",
   "main": "index.js",
   "scripts": {
-    "test": "exit 0",
+    "test": "$(npm bin)/jasmine",
     "doc": "$(npm bin)/jsdoc2md index.js > API.md",
     "build": "npm run doc",
     "dev-server": "$(npm bin)/nodemon server.js",
@@ -20,6 +20,7 @@
     "restify": "^6.3.4"
   },
   "devDependencies": {
+    "jasmine": "^3.0.0",
     "jsdoc-to-markdown": "^4.0.1",
     "nodemon": "^1.15.0"
   }

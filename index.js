@@ -18,14 +18,14 @@ class HLSVod {
   /**
    * Load and parse the HLS VOD
    */
-  load() {
+  load(_injectMasterManifest, _injectMediaManifest) {
     return new Promise((resolve, reject) => {
       const parser = m3u8.createStream();
 
       parser.on('m3u', m3u => {
         let mediaManifestPromises = [];
         m3u.items.StreamItem.forEach(streamItem => {
-          mediaManifestPromises.push(this._loadMediaManifest(streamItem.properties.uri, streamItem.attributes.attributes['bandwidth']));
+          mediaManifestPromises.push(this._loadMediaManifest(streamItem.properties.uri, streamItem.attributes.attributes['bandwidth'], _injectMediaManifest));
         });
         Promise.all(mediaManifestPromises)
         .then(this._createMediaSequences.bind(this))
@@ -37,11 +37,15 @@ class HLSVod {
         reject(err);
       });
 
-      request.get(this.masterManifestUri)
-      .on('error', err => {
-        reject(err);
-      })
-      .pipe(parser);
+      if (!_injectMasterManifest) {
+        request.get(this.masterManifestUri)
+        .on('error', err => {
+          reject(err);
+        })
+        .pipe(parser);
+      } else {
+        _injectMasterManifest().pipe(parser);
+      }
     });
   }
 
@@ -51,10 +55,10 @@ class HLSVod {
    * 
    * @param {HLSVod} previousVod - the previous VOD to concatenate to
    */
-  loadAfter(previousVod) {
+  loadAfter(previousVod, _injectMasterManifest, _injectMediaManifest) {
     this.previousVod = previousVod;
     this._loadPrevious();
-    return this.load();
+    return this.load(_injectMasterManifest, _injectMediaManifest);
   }
 
   /**
@@ -154,7 +158,7 @@ class HLSVod {
     });
   }
 
-  _loadMediaManifest(mediaManifestUri, bandwidth) {
+  _loadMediaManifest(mediaManifestUri, bandwidth, _injectMediaManifest) {
     return new Promise((resolve, reject) => {
       const parser = m3u8.createStream();
       let bw = bandwidth;
@@ -178,8 +182,12 @@ class HLSVod {
         resolve();
       });
 
-      request.get(mediaManifestUri)
-      .pipe(parser);
+      if (!_injectMediaManifest) {
+        request.get(mediaManifestUri)
+        .pipe(parser);
+      } else {
+        _injectMediaManifest(bandwidth).pipe(parser);
+      }
     });
   }
 
