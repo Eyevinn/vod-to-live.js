@@ -1,5 +1,6 @@
 const m3u8 = require('m3u8');
 const request = require('request');
+const url = require('url');
 
 class HLSVod {
   /**
@@ -24,8 +25,14 @@ class HLSVod {
 
       parser.on('m3u', m3u => {
         let mediaManifestPromises = [];
+        let baseUrl;
+        const m = this.masterManifestUri.match('^(.*)/.*?$');
+        if (m) {
+          baseUrl = m[1] + '/';
+        }
         m3u.items.StreamItem.forEach(streamItem => {
-          mediaManifestPromises.push(this._loadMediaManifest(streamItem.properties.uri, streamItem.attributes.attributes['bandwidth'], _injectMediaManifest));
+          let mediaManifestUrl = url.resolve(baseUrl, streamItem.properties.uri);
+          mediaManifestPromises.push(this._loadMediaManifest(mediaManifestUrl, streamItem.attributes.attributes['bandwidth'], _injectMediaManifest));
         });
         Promise.all(mediaManifestPromises)
         .then(this._createMediaSequences.bind(this))
@@ -173,9 +180,22 @@ class HLSVod {
 
       parser.on('m3u', m3u => {
         m3u.items.PlaylistItem.forEach(playlistItem => {
+          let segmentUri;
+          let baseUrl;
+
+          const m = mediaManifestUri.match('^(.*)/.*?$');
+          if (m) {
+            baseUrl = m[1] + '/';
+          }
+          
+          if (playlistItem.properties.uri.match('^http')) {
+            segmentUri = playlistItem.properties.uri;
+          } else {
+            segmentUri = url.resolve(baseUrl, playlistItem.properties.uri);
+          }
           this.segments[bw].push([
             playlistItem.properties.duration,
-            playlistItem.properties.uri
+            segmentUri
           ]);
         });
         this.targetDuration[bw] = this.segments[bw].map(el => el[0]).reduce((max, cur) => Math.max(max, cur), -Infinity);

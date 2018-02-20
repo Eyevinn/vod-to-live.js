@@ -2,8 +2,9 @@ const crypto = require('crypto');
 const HLSVod = require('../index.js');
 
 const exampleVod = [
-  "https://tv4play-i.akamaihd.net/i/mp4root/2018-01-26/pid200032972(3953564_,T3MP445,T3MP435,T3MP425,T3MP415,T3MP48,T3MP43,T3MP4130,).mp4.csmil/master.m3u8",
-  "https://tv4play-i.akamaihd.net/i/mp4root/2018-01-30/pid200032256(3954321_,T3MP445,T3MP435,T3MP425,T3MP415,T3MP48,T3MP43,T3MP4130,).mp4.csmil/master.m3u8",
+  "https://maitv-vod.lab.eyevinn.technology/streaming+tech+2017+HLS/Arash/Arash.m3u8",
+  "https://maitv-vod.lab.eyevinn.technology/streaming+tech+2017+HLS/Linden/Linden.m3u8",
+  "https://maitv-vod.lab.eyevinn.technology/streaming+tech+2017+HLS/Ozer/Ozer.m3u8",
 ];
 
 const SessionState = Object.freeze({
