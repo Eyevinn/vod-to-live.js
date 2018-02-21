@@ -105,9 +105,13 @@ class HLSVod {
     m3u8 += "#EXT-X-TARGETDURATION:" + this.targetDuration[bw] + "\n";
     m3u8 += "#EXT-X-MEDIA-SEQUENCE:" + (offset + seqIdx) + "\n";
     this.mediaSequences[seqIdx].segments[bw].forEach(v => {
-      if (v[0] !== -1) {
-        m3u8 += "#EXTINF:" + v[0] + "\n";
-        m3u8 += v[1] + "\n";
+      if (v) {
+        if (v[0] !== -1) {
+          m3u8 += "#EXTINF:" + v[0] + "\n";
+          m3u8 += v[1] + "\n";
+        } else {
+          m3u8 += "#EXT-X-DISCONTINUITY\n";
+        }
       } else {
         m3u8 += "#EXT-X-DISCONTINUITY\n";
       }
@@ -218,7 +222,9 @@ class HLSVod {
         return availableBandwidths[i];
       }
     }
+    return availableBandwidths[availableBandwidths - 1];
   }
 }
 
 module.exports = HLSVod;
+
