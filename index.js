@@ -179,6 +179,7 @@ class HLSVod {
           bw = this._getNearestBandwidth(bandwidth);
         } else {
           this.segments[bw] = [];
+          this.targetDuration[bw] = 9;
         }
       }
 
