@@ -222,7 +222,7 @@ class HLSVod {
         return availableBandwidths[i];
       }
     }
-    return availableBandwidths[availableBandwidths - 1];
+    return availableBandwidths[availableBandwidths.length - 1];
   }
 }
 
