@@ -101,7 +101,7 @@ class HLSVod {
   getLiveMediaSequences(offset, bandwidth, seqIdx) {
     const bw = this._getNearestBandwidth(bandwidth);
     if (!this.targetDuration[bw]) {
-      this.targetDuration = 9;
+      this.targetDuration[bw] = 9;
     }
     let m3u8 = "#EXTM3U\n";
     m3u8 += "#EXT-X-VERSION:3\n";
@@ -206,7 +206,7 @@ class HLSVod {
             segmentUri
           ]);
         });
-        this.targetDuration[bw] = this.segments[bw].map(el => el[0]).reduce((max, cur) => Math.max(max, cur), -Infinity);
+        this.targetDuration[bw] = Math.ceil(this.segments[bw].map(el => el[0]).reduce((max, cur) => Math.max(max, cur), -Infinity));
         resolve();
       });
 
