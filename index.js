@@ -109,7 +109,7 @@ class HLSVod {
    * @param {number} seqIdx 
    */
   getLiveMediaSequences(offset, bandwidth, seqIdx) {
-    const bw = bandwidth;
+    const bw = this._getNearestBandwidth(bandwidth);
     let m3u8 = "#EXTM3U\n";
     m3u8 += "#EXT-X-VERSION:3\n";
     m3u8 += "#EXT-X-TARGETDURATION:" + this.targetDuration[bw] + "\n";
