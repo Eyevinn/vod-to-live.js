@@ -1,6 +1,7 @@
 const m3u8 = require('m3u8');
 const request = require('request');
 const url = require('url');
+const debug = require('debug')('vod-to-live');
 
 class HLSVod {
   /**
@@ -100,7 +101,7 @@ class HLSVod {
    * @param {number} seqIdx 
    */
   getLiveMediaSequences(offset, bandwidth, seqIdx) {
-    const bw = this._getNearestBandwidth(bandwidth);
+    const bw = this._getNearestBandwidthForMediaSeq(bandwidth);
     if (!this.targetDuration[bw]) {
       this.targetDuration[bw] = 9;
     }
@@ -229,6 +230,18 @@ class HLSVod {
 
   _getNearestBandwidth(bandwidth) {
     const filteredBandwidths = Object.keys(this.segments).filter(bw => this.segments[bw].length > 0);
+    const availableBandwidths = filteredBandwidths.sort((a,b) => b - a);
+
+    for (let i = 0; i < availableBandwidths.length; i++) {
+      if (bandwidth >= availableBandwidths[i]) {
+        return availableBandwidths[i];
+      }
+    }
+    return availableBandwidths[availableBandwidths.length - 1];
+  }
+
+  _getNearestBandwidthForMediaSeq(seqIdx, bandwidth) {
+    const filteredBandwidths = Object.keys(this.mediaSequences[seqIdx].segments).filter(bw => this.mediaSequences[seqIdx].segments[bw].length > 0);
     const availableBandwidths = filteredBandwidths.sort((a,b) => b - a);
 
     for (let i = 0; i < availableBandwidths.length; i++) {
