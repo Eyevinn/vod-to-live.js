@@ -15,6 +15,7 @@ class HLSVod {
     this.SEQUENCE_DURATION = 60;
     this.targetDuration = {};
     this.previousVod = null;
+    this.usageProfile = [];
   }
 
   /**
@@ -34,7 +35,14 @@ class HLSVod {
         for (let i = 0; i < m3u.items.StreamItem.length; i++) {
           const streamItem = m3u.items.StreamItem[i];        
           let mediaManifestUrl = url.resolve(baseUrl, streamItem.properties.uri);
-          mediaManifestPromises.push(this._loadMediaManifest(mediaManifestUrl, streamItem.attributes.attributes['bandwidth'], _injectMediaManifest));
+          if (streamItem.attributes.attributes['resolution']) {
+            this.usageProfile.push({
+              bw: streamItem.attributes.attributes['bandwidth'],
+              codecs: streamItem.attributes.attributes['codecs'],
+              resolution: streamItem.attributes.attributes['resolution'][0] + 'x' + streamItem.attributes.attributes['resolution'][1]
+            });
+            mediaManifestPromises.push(this._loadMediaManifest(mediaManifestUrl, streamItem.attributes.attributes['bandwidth'], _injectMediaManifest));
+          }
         }
         Promise.all(mediaManifestPromises)
         .then(this._createMediaSequences.bind(this))
@@ -101,10 +109,7 @@ class HLSVod {
    * @param {number} seqIdx 
    */
   getLiveMediaSequences(offset, bandwidth, seqIdx) {
-    const bw = this._getNearestBandwidthForMediaSeq(bandwidth);
-    if (!this.targetDuration[bw]) {
-      this.targetDuration[bw] = 9;
-    }
+    const bw = bandwidth;
     let m3u8 = "#EXTM3U\n";
     m3u8 += "#EXT-X-VERSION:3\n";
     m3u8 += "#EXT-X-TARGETDURATION:" + this.targetDuration[bw] + "\n";
@@ -122,6 +127,10 @@ class HLSVod {
     }
 
     return m3u8;
+  }
+
+  getUsageProfiles() {
+    return this.usageProfile;
   }
 
   _loadPrevious() {
@@ -145,7 +154,7 @@ class HLSVod {
       let segOffset = 0;
       let segIdx = 0;
       let duration = 0;
-      const bw = Object.keys(this.segments)[0];
+      const bw = this._getFirstBwWithSegments()
       let sequence = {};
       while (segIdx != this.segments[bw].length) {
         if (this.segments[bw][segIdx][0] !== -1) {
@@ -180,20 +189,32 @@ class HLSVod {
     });
   }
 
+  _getFirstBwWithSegments() {
+    const bandwidths = Object.keys(this.segments).filter(bw => this.segments[bw].length > 0);
+    if (bandwidths.length > 0) {
+      return bandwidths[0];
+    } else {
+      console.log('ERROR: could not find any bw with segments');
+      return null;
+    }
+  }
+
   _loadMediaManifest(mediaManifestUri, bandwidth, _injectMediaManifest) {
     return new Promise((resolve, reject) => {
       const parser = m3u8.createStream();
       let bw = bandwidth;
-      if (!this.segments[bandwidth]) {
-        if (this.previousVod) {
-          // Find a close bw initiated from previous vod
-          bw = this._getNearestBandwidth(bandwidth);
-        } else {
-          this.segments[bw] = [];
-          this.targetDuration[bw] = 9;
-        }
-      }
+      debug(`Loading media manifest for bandwidth=${bw}`);
 
+      if (this.previousVod) {
+        debug(`We have a previous VOD and need to match ${bw} with ${Object.keys(this.segments)}`);
+        bw = this._getNearestBandwidth(bw);
+        debug(`Selected ${bw} to use`);
+      } else {
+        if (!this.segments[bw]) {
+          this.segments[bw] = [];
+        } 
+      }
+  
       parser.on('m3u', m3u => {
         for (let i = 0; i < m3u.items.PlaylistItem.length; i++) {
           const playlistItem = m3u.items.PlaylistItem[i];
@@ -240,17 +261,6 @@ class HLSVod {
     return availableBandwidths[availableBandwidths.length - 1];
   }
 
-  _getNearestBandwidthForMediaSeq(seqIdx, bandwidth) {
-    const filteredBandwidths = Object.keys(this.mediaSequences[seqIdx].segments).filter(bw => this.mediaSequences[seqIdx].segments[bw].length > 0);
-    const availableBandwidths = filteredBandwidths.sort((a,b) => b - a);
-
-    for (let i = 0; i < availableBandwidths.length; i++) {
-      if (bandwidth >= availableBandwidths[i]) {
-        return availableBandwidths[i];
-      }
-    }
-    return availableBandwidths[availableBandwidths.length - 1];
-  }
 }
 
 module.exports = HLSVod;
