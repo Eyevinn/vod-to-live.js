@@ -115,8 +115,6 @@ class HLSVod {
         } else {
           m3u8 += "#EXT-X-DISCONTINUITY\n";
         }
-      } else {
-        m3u8 += "#EXT-X-DISCONTINUITY\n";
       }
     });
 
