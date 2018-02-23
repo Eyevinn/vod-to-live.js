@@ -16,6 +16,7 @@ class HLSVod {
     this.targetDuration = {};
     this.previousVod = null;
     this.usageProfile = [];
+    this.segmentsInitiated = {};
   }
 
   /**
@@ -109,11 +110,17 @@ class HLSVod {
    * @param {number} seqIdx 
    */
   getLiveMediaSequences(offset, bandwidth, seqIdx) {
-    const bw = this._getNearestBandwidth(bandwidth);
+    const bw = this._getNearestBandwidthWithInitiatedSegments(bandwidth);
+    debug(`Get live media sequence [${seqIdx}] for bw=${bw} (requested bw ${bandwidth})`);
     let m3u8 = "#EXTM3U\n";
     m3u8 += "#EXT-X-VERSION:3\n";
     m3u8 += "#EXT-X-TARGETDURATION:" + this.targetDuration[bw] + "\n";
     m3u8 += "#EXT-X-MEDIA-SEQUENCE:" + (offset + seqIdx) + "\n";
+    if (!this.mediaSequences[seqIdx]) {
+      debug('No segments in media sequence!');
+      debug(this.mediaSequences[seqIdx]);
+      debug(this.segments[bw]);
+    }
     for (let i = 0; i < this.mediaSequences[seqIdx].segments[bw].length; i++) {
       const v = this.mediaSequences[seqIdx].segments[bw][i];
       if (v) {
@@ -190,7 +197,7 @@ class HLSVod {
   }
 
   _getFirstBwWithSegments() {
-    const bandwidths = Object.keys(this.segments).filter(bw => this.segments[bw].length > 0);
+    const bandwidths = Object.keys(this.segments).filter(bw => this.segmentsInitiated[bw]);
     if (bandwidths.length > 0) {
       return bandwidths[0];
     } else {
@@ -216,27 +223,32 @@ class HLSVod {
       }
   
       parser.on('m3u', m3u => {
-        for (let i = 0; i < m3u.items.PlaylistItem.length; i++) {
-          const playlistItem = m3u.items.PlaylistItem[i];
-          let segmentUri;
-          let baseUrl;
+        if (!this.segmentsInitiated[bw]) {
+          for (let i = 0; i < m3u.items.PlaylistItem.length; i++) {
+            const playlistItem = m3u.items.PlaylistItem[i];
+            let segmentUri;
+            let baseUrl;
 
-          const m = mediaManifestUri.match('^(.*)/.*?$');
-          if (m) {
-            baseUrl = m[1] + '/';
+            const m = mediaManifestUri.match('^(.*)/.*?$');
+            if (m) {
+              baseUrl = m[1] + '/';
+            }
+            
+            if (playlistItem.properties.uri.match('^http')) {
+              segmentUri = playlistItem.properties.uri;
+            } else {
+              segmentUri = url.resolve(baseUrl, playlistItem.properties.uri);
+            }
+            this.segments[bw].push([
+              playlistItem.properties.duration,
+              segmentUri
+            ]);
           }
-          
-          if (playlistItem.properties.uri.match('^http')) {
-            segmentUri = playlistItem.properties.uri;
-          } else {
-            segmentUri = url.resolve(baseUrl, playlistItem.properties.uri);
-          }
-          this.segments[bw].push([
-            playlistItem.properties.duration,
-            segmentUri
-          ]);
+          this.targetDuration[bw] = Math.ceil(this.segments[bw].map(el => el[0]).reduce((max, cur) => Math.max(max, cur), -Infinity));
+          this.segmentsInitiated[bw] = true;
+        } else {
+          debug(`Segments for ${bw} already initiated, skipping`);
         }
-        this.targetDuration[bw] = Math.ceil(this.segments[bw].map(el => el[0]).reduce((max, cur) => Math.max(max, cur), -Infinity));
         resolve();
       });
 
@@ -253,12 +265,26 @@ class HLSVod {
     const filteredBandwidths = Object.keys(this.segments).filter(bw => this.segments[bw].length > 0);
     const availableBandwidths = filteredBandwidths.sort((a,b) => a - b);
 
+    debug(`Find ${bandwidth} in ${availableBandwidths}`);
     for (let i = 0; i < availableBandwidths.length; i++) {
       if (bandwidth <= availableBandwidths[i]) {
         return availableBandwidths[i];
       }
     }
     return availableBandwidths[availableBandwidths.length - 1];
+  }
+
+  _getNearestBandwidthWithInitiatedSegments(bandwidth) {
+    const filteredBandwidths = Object.keys(this.segments).filter(bw => this.segmentsInitiated[bw]);
+    const availableBandwidths = filteredBandwidths.sort((a,b) => a - b);
+
+    debug(`Find ${bandwidth} in ${availableBandwidths}`);
+    for (let i = 0; i < availableBandwidths.length; i++) {
+      if (bandwidth <= availableBandwidths[i]) {
+        return availableBandwidths[i];
+      }
+    }
+    return availableBandwidths[availableBandwidths.length - 1];    
   }
 
 }
