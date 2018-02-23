@@ -251,10 +251,10 @@ class HLSVod {
 
   _getNearestBandwidth(bandwidth) {
     const filteredBandwidths = Object.keys(this.segments).filter(bw => this.segments[bw].length > 0);
-    const availableBandwidths = filteredBandwidths.sort((a,b) => b - a);
+    const availableBandwidths = filteredBandwidths.sort((a,b) => a - b);
 
     for (let i = 0; i < availableBandwidths.length; i++) {
-      if (bandwidth >= availableBandwidths[i]) {
+      if (bandwidth <= availableBandwidths[i]) {
         return availableBandwidths[i];
       }
     }
