@@ -254,6 +254,13 @@ class HLSVod {
             if (nextSplicePosition && position + playlistItem.properties.duration > nextSplicePosition) {
               debug(`Inserting splice at ${bw}:${position} (${i})`);
               this.segments[bw].push([-1]);
+              if (this.splices[spliceIdx].segments[bw]) {
+                debug(`Inserting ${this.splices[spliceIdx].segments[bw].length} ad segments`);
+                this.splices[spliceIdx].segments[bw].forEach(v => {
+                  this.segments[bw].push(v);
+                });
+                this.segments[bw].push([-1]);
+              }
               spliceIdx++;
             }
             this.segments[bw].push([
