@@ -7,8 +7,9 @@ class HLSVod {
   /**
    * Create an HLS VOD instance
    * @param {string} vodManifestUri - the uri to the master manifest of the VOD
+   * @param {Object} splices - an array of ad splice objects
    */
-  constructor(vodManifestUri) {
+  constructor(vodManifestUri, splices) {
     this.masterManifestUri = vodManifestUri;
     this.segments = {};
     this.mediaSequences = [];
@@ -17,6 +18,7 @@ class HLSVod {
     this.previousVod = null;
     this.usageProfile = [];
     this.segmentsInitiated = {};
+    this.splices = splices || [];
   }
 
   /**
@@ -224,7 +226,17 @@ class HLSVod {
   
       parser.on('m3u', m3u => {
         if (!this.segmentsInitiated[bw]) {
+          let position = 0;
+          let nextSplicePosition = null;
+          let spliceIdx = 0;
+
           for (let i = 0; i < m3u.items.PlaylistItem.length; i++) {
+            if (this.splices[spliceIdx]) {
+              nextSplicePosition = this.splices[spliceIdx].position;
+            } else {
+              nextSplicePosition = null;
+            }
+
             const playlistItem = m3u.items.PlaylistItem[i];
             let segmentUri;
             let baseUrl;
@@ -239,10 +251,16 @@ class HLSVod {
             } else {
               segmentUri = url.resolve(baseUrl, playlistItem.properties.uri);
             }
+            if (nextSplicePosition && position + playlistItem.properties.duration > nextSplicePosition) {
+              debug(`Inserting splice at ${bw}:${position} (${i})`);
+              this.segments[bw].push([-1]);
+              spliceIdx++;
+            }
             this.segments[bw].push([
               playlistItem.properties.duration,
               segmentUri
             ]);
+            position += playlistItem.properties.duration;
           }
           this.targetDuration[bw] = Math.ceil(this.segments[bw].map(el => el ? el[0] : 0).reduce((max, cur) => Math.max(max, cur), -Infinity));
           this.segmentsInitiated[bw] = true;

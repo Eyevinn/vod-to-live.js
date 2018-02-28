@@ -102,3 +102,75 @@ describe("HLSVod after another VOD", () => {
     });
   });
 });
+
+describe("HLSVod with ad splicing", () => {
+  let mockMasterManifest;
+  let mockMediaManifest;
+
+  beforeEach(() => {
+    mockMasterManifest = function() {
+      return fs.createReadStream('testvectors/hls1/master.m3u8');
+    };
+    mockMediaManifest = function(bandwidth) {
+      return fs.createReadStream('testvectors/hls1/' + bandwidth + '.m3u8');
+    };
+  });
+
+  it("has an ad splice at ~10 seconds and ~176 seconds from the start", done => {
+    const splices = [
+      { 
+        position: 10.0,
+        segments: {
+          '2497000': [ [3, 'ad01.ts'], [3, 'ad02.ts'], [3, 'ad03.ts'], ],
+          '1497000': [ [3, 'ad01.ts'], [3, 'ad02.ts'], [3, 'ad03.ts'], ],
+        }
+      },
+      { 
+        position: 176.5,
+        segments: {
+          '2497000': [ [3, 'ad11.ts'], [3, 'ad12.ts'], [3, 'ad13.ts'], ],
+          '1497000': [ [3, 'ad11.ts'], [3, 'ad12.ts'], [3, 'ad13.ts'], ],
+        }
+      }
+    ];
+    let mockVod = new HLSVod('http://mock.com/mock.m3u8', splices);
+    mockVod.load(mockMasterManifest, mockMediaManifest)
+    .then(() => {
+      let seqSegments = mockVod.getLiveMediaSequenceSegments(0);
+      expect(seqSegments['2497000'][1][0]).toBe(-1);
+      seqSegments = mockVod.getLiveMediaSequenceSegments(18);
+      expect(seqSegments['2497000'][2][0]).toBe(-1);
+      done();
+    });
+  });
+
+  it("has an ad splice at ~10 seconds from where the new VOD starts", done => {
+    const splices = [
+      { 
+        position: 10.0,
+        segments: {
+          '2497000': [ [3, 'ad01.ts'], [3, 'ad02.ts'], [3, 'ad03.ts'], ],
+          '1497000': [ [3, 'ad01.ts'], [3, 'ad02.ts'], [3, 'ad03.ts'], ],
+        }
+      },
+      { 
+        position: 176.5,
+        segments: {
+          '2497000': [ [3, 'ad11.ts'], [3, 'ad12.ts'], [3, 'ad13.ts'], ],
+          '1497000': [ [3, 'ad11.ts'], [3, 'ad12.ts'], [3, 'ad13.ts'], ],
+        }
+      }
+    ];
+    let mockVod = new HLSVod('http://mock.com/mock.m3u8');
+    let mockVod2 = new HLSVod('http://mock.com/mock2.m3u8', splices);
+    mockVod.load(mockMasterManifest, mockMediaManifest)
+    .then(() => {
+      return mockVod2.loadAfter(mockVod, mockMasterManifest, mockMediaManifest);
+    }).then(() => {
+      const seqSegments = mockVod2.getLiveMediaSequenceSegments(1);
+      expect(seqSegments['2497000'][4][0]).toBe(-1);
+      expect(seqSegments['2497000'][6][0]).toBe(-1);
+      done();
+    });    
+  });
+});
