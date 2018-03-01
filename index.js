@@ -253,13 +253,22 @@ class HLSVod {
             }
             if (nextSplicePosition && position + playlistItem.properties.duration > nextSplicePosition) {
               debug(`Inserting splice at ${bw}:${position} (${i})`);
-              this.segments[bw].push([-1]);
+              if (this.segments[bw].length > 0) {
+                // Only insert discontinuity if this is not the first segment
+                debug(`Inserting discontinuity at ${bw}:${position} (${i}/${m3u.items.PlaylistItem.length})`);
+                this.segments[bw].push([-1]);                
+              }
               if (this.splices[spliceIdx].segments[bw]) {
                 debug(`Inserting ${this.splices[spliceIdx].segments[bw].length} ad segments`);
                 this.splices[spliceIdx].segments[bw].forEach(v => {
                   this.segments[bw].push(v);
                 });
-                this.segments[bw].push([-1]);
+                if (i != m3u.items.PlaylistItem.length - 1) {
+                  // Only insert discontinuity after ad segments if this break is not at the end
+                  // of the segment list
+                  debug(`Inserting discontinuity after ad segments`);                  
+                  this.segments[bw].push([-1]);
+                }
               }
               spliceIdx++;
             }

@@ -148,6 +148,47 @@ describe("HLSVod with ad splicing", () => {
     });
   });
 
+  it("does not start with a discontinuity if ad is the first segment", done => {
+    const splices = [
+      { 
+        position: 5.0,
+        segments: {
+          '2497000': [ [3, 'ad01.ts'], [3, 'ad02.ts'], [3, 'ad03.ts'], ],
+          '1497000': [ [3, 'ad01.ts'], [3, 'ad02.ts'], [3, 'ad03.ts'], ],
+        }
+      },
+    ];
+    let mockVod = new HLSVod('http://mock.com/mock.m3u8', splices);
+    mockVod.load(mockMasterManifest, mockMediaManifest)
+    .then(() => {
+      let seqSegments = mockVod.getLiveMediaSequenceSegments(0);
+      expect(seqSegments['2497000'][0][0]).not.toBe(-1);
+      done();
+    });
+  });
+
+  it("does not end with a discontinuity if ad is the last segment", done => {
+    const splices = [
+      { 
+        position: 2646.0,
+        segments: {
+          '2497000': [ [3, 'ad01.ts'], [3, 'ad02.ts'], [3, 'ad03.ts'], ],
+          '1497000': [ [3, 'ad01.ts'], [3, 'ad02.ts'], [3, 'ad03.ts'], ],
+        }
+      },
+    ];
+    let mockVod = new HLSVod('http://mock.com/mock.m3u8', splices);
+    mockVod.load(mockMasterManifest, mockMediaManifest)
+    .then(() => {
+      const count = mockVod.getLiveMediaSequencesCount();
+      let seqSegments = mockVod.getLiveMediaSequenceSegments(count - 1);
+      const seqLength = seqSegments['2497000'].length;
+      expect(seqSegments['2497000'][seqLength - 1][0]).not.toBe(-1);
+      expect(seqSegments['2497000'][seqLength - 1][1]).toEqual('ad03.ts');
+      done();
+    });
+  });
+
   it("has an ad splice at ~10 seconds from where the new VOD starts", done => {
     const splices = [
       { 
@@ -176,5 +217,27 @@ describe("HLSVod with ad splicing", () => {
       expect(seqSegments['2497000'][6][0]).toBe(-1);
       done();
     });    
+  });
+
+  it("does not contain ad splice outside of content duration", done => {
+    const splices = [
+      { 
+        position: 5430.5,
+        segments: {
+          '2497000': [ [3, 'ad01.ts'], [3, 'ad02.ts'], [3, 'ad03.ts'], ],
+          '1497000': [ [3, 'ad01.ts'], [3, 'ad02.ts'], [3, 'ad03.ts'], ],
+        }
+      },
+    ];
+    let mockVod = new HLSVod('http://mock.com/mock.m3u8', splices);
+    mockVod.load(mockMasterManifest, mockMediaManifest)
+    .then(() => {
+      const count = mockVod.getLiveMediaSequencesCount();
+      let seqSegments = mockVod.getLiveMediaSequenceSegments(count - 1);
+      const seqLength = seqSegments['2497000'].length;
+      console.log(seqSegments['2497000']);
+      expect(seqSegments['2497000'][seqLength - 1][1]).not.toEqual('ad03.ts');
+      done();
+    });
   });
 });
