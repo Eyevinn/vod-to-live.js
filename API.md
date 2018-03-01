@@ -4,7 +4,7 @@
 **Kind**: global class  
 
 * [HLSVod](#HLSVod)
-    * [new HLSVod(vodManifestUri)](#new_HLSVod_new)
+    * [new HLSVod(vodManifestUri, splices)](#new_HLSVod_new)
     * [.load()](#HLSVod+load)
     * [.loadAfter(previousVod)](#HLSVod+loadAfter)
     * [.getLiveMediaSequenceSegments(seqIdx)](#HLSVod+getLiveMediaSequenceSegments)
@@ -14,13 +14,14 @@
 
 <a name="new_HLSVod_new"></a>
 
-### new HLSVod(vodManifestUri)
+### new HLSVod(vodManifestUri, splices)
 Create an HLS VOD instance
 
 
 | Param | Type | Description |
 | --- | --- | --- |
 | vodManifestUri | <code>string</code> | the uri to the master manifest of the VOD |
+| splices | <code>Object</code> | an array of ad splice objects |
 
 <a name="HLSVod+load"></a>
 
