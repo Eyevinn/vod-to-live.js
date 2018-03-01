@@ -212,6 +212,7 @@ class HLSVod {
     return new Promise((resolve, reject) => {
       const parser = m3u8.createStream();
       let bw = bandwidth;
+      let spliceBw = bandwidth;
       debug(`Loading media manifest for bandwidth=${bw}`);
 
       if (this.previousVod) {
@@ -233,6 +234,7 @@ class HLSVod {
           for (let i = 0; i < m3u.items.PlaylistItem.length; i++) {
             if (this.splices[spliceIdx]) {
               nextSplicePosition = this.splices[spliceIdx].position;
+              spliceBw = this._getNearestBandwidthForSplice(this.splices[spliceIdx], bw);
             } else {
               nextSplicePosition = null;
             }
@@ -258,9 +260,9 @@ class HLSVod {
                 debug(`Inserting discontinuity at ${bw}:${position} (${i}/${m3u.items.PlaylistItem.length})`);
                 this.segments[bw].push([-1]);                
               }
-              if (this.splices[spliceIdx].segments[bw]) {
-                debug(`Inserting ${this.splices[spliceIdx].segments[bw].length} ad segments`);
-                this.splices[spliceIdx].segments[bw].forEach(v => {
+              if (this.splices[spliceIdx].segments[spliceBw]) {
+                debug(`Inserting ${this.splices[spliceIdx].segments[spliceBw].length} ad segments`);
+                this.splices[spliceIdx].segments[spliceBw].forEach(v => {
                   this.segments[bw].push(v);
                 });
                 if (i != m3u.items.PlaylistItem.length - 1) {
@@ -313,6 +315,18 @@ class HLSVod {
     const availableBandwidths = filteredBandwidths.sort((a,b) => a - b);
 
     debug(`Find ${bandwidth} in ${availableBandwidths}`);
+    for (let i = 0; i < availableBandwidths.length; i++) {
+      if (bandwidth <= availableBandwidths[i]) {
+        return availableBandwidths[i];
+      }
+    }
+    return availableBandwidths[availableBandwidths.length - 1];    
+  }
+
+  _getNearestBandwidthForSplice(splice, bandwidth) {
+    const availableBandwidths = Object.keys(splice.segments);
+
+    debug(`Find ${bandwidth} in splice ${availableBandwidths}`);
     for (let i = 0; i < availableBandwidths.length; i++) {
       if (bandwidth <= availableBandwidths[i]) {
         return availableBandwidths[i];

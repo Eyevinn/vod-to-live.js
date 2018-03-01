@@ -240,4 +240,24 @@ describe("HLSVod with ad splicing", () => {
       done();
     });
   });
+
+  it("can handle ad that does not match current vod usage profile", done => {
+    const splices = [
+      { 
+        position: 10.0,
+        segments: {
+          '2498000': [ [3, 'ad01.ts'], [3, 'ad02.ts'], [3, 'ad03.ts'], ],
+          '1494000': [ [3, 'ad01.ts'], [3, 'ad02.ts'], [3, 'ad03.ts'], ],
+        }
+      },
+    ];
+    let mockVod = new HLSVod('http://mock.com/mock.m3u8', splices);
+    mockVod.load(mockMasterManifest, mockMediaManifest)
+    .then(() => {
+      let seqSegments = mockVod.getLiveMediaSequenceSegments(0);
+      console.log(seqSegments['2497000']);
+      expect(seqSegments['2497000'][2][1]).toEqual('ad01.ts');
+      done();
+    });
+  });
 });
