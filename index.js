@@ -255,7 +255,7 @@ class HLSVod {
             } else {
               segmentUri = url.resolve(baseUrl, playlistItem.properties.uri);
             }
-            if (nextSplicePosition && position + playlistItem.properties.duration > nextSplicePosition) {
+            if (nextSplicePosition != null && position + playlistItem.properties.duration > nextSplicePosition) {
               debug(`Inserting splice at ${bw}:${position} (${i})`);
               if (this.segments[bw].length > 0) {
                 // Only insert discontinuity if this is not the first segment
@@ -279,7 +279,7 @@ class HLSVod {
             }
             // Next splice is back-to-back?
             if (this.splices[spliceIdx]) {
-              debug(`${this.splices[spliceIdx].position} < ${position}`);
+              debug(`${this.splices[spliceIdx].position} <= ${position}`);
             }
             if (this.splices[spliceIdx] && this.splices[spliceIdx].position <= position) {
               debug(`Next splice is back-to-back, not inserting new segment`);

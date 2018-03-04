@@ -263,7 +263,7 @@ describe("HLSVod with ad splicing", () => {
   it("can handle two ads back-to-back", done => {
     const splices = [
       { 
-        position: 0.1,
+        position: 0.0,
         segments: {
           '2497000': [ [3, 'ad01.ts'], [3, 'ad02.ts'], [3, 'ad03.ts'], ],
           '1497000': [ [3, 'ad01.ts'], [3, 'ad02.ts'], [3, 'ad03.ts'], ],
