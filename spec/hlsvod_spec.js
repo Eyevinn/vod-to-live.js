@@ -139,11 +139,12 @@ describe("HLSVod with ad splicing", () => {
       let seqSegments = mockVod.getLiveMediaSequenceSegments(0);
       expect(seqSegments['2497000'][1][0]).toBe(-1);
       seqSegments = mockVod.getLiveMediaSequenceSegments(18);
-      expect(seqSegments['2497000'][6][0]).toBe(-1);
-      expect(seqSegments['2497000'][7][0]).toBe(3);
-      expect(seqSegments['2497000'][7][1]).toBe('ad11.ts');
+      expect(seqSegments['2497000'][5][0]).toBe(-1);
+      expect(seqSegments['2497000'][6][0]).toBe(3);
+      expect(seqSegments['2497000'][6][1]).toBe('ad11.ts');
       seqSegments = mockVod.getLiveMediaSequenceSegments(20);
-      expect(seqSegments['2497000'][8][0]).toBe(-1);
+      console.log(seqSegments['2497000'])
+      expect(seqSegments['2497000'][7][0]).toBe(-1);
       done();
     });
   });
@@ -235,7 +236,6 @@ describe("HLSVod with ad splicing", () => {
       const count = mockVod.getLiveMediaSequencesCount();
       let seqSegments = mockVod.getLiveMediaSequenceSegments(count - 1);
       const seqLength = seqSegments['2497000'].length;
-      console.log(seqSegments['2497000']);
       expect(seqSegments['2497000'][seqLength - 1][1]).not.toEqual('ad03.ts');
       done();
     });
@@ -255,9 +255,39 @@ describe("HLSVod with ad splicing", () => {
     mockVod.load(mockMasterManifest, mockMediaManifest)
     .then(() => {
       let seqSegments = mockVod.getLiveMediaSequenceSegments(0);
-      console.log(seqSegments['2497000']);
       expect(seqSegments['2497000'][2][1]).toEqual('ad01.ts');
       done();
     });
+  });
+
+  it("can handle two ads back-to-back", done => {
+    const splices = [
+      { 
+        position: 0.1,
+        segments: {
+          '2497000': [ [3, 'ad01.ts'], [3, 'ad02.ts'], [3, 'ad03.ts'], ],
+          '1497000': [ [3, 'ad01.ts'], [3, 'ad02.ts'], [3, 'ad03.ts'], ],
+        }
+      },
+      { 
+        position: 9.0,
+        segments: {
+          '2497000': [ [3, 'ad11.ts'], [3, 'ad12.ts'], [3, 'ad13.ts'], ],
+          '1497000': [ [3, 'ad11.ts'], [3, 'ad12.ts'], [3, 'ad13.ts'], ],
+        }
+      }
+    ];
+    let mockVod = new HLSVod('http://mock.com/mock.m3u8');
+    let mockVod2 = new HLSVod('http://mock.com/mock2.m3u8', splices);
+    mockVod.load(mockMasterManifest, mockMediaManifest)
+    .then(() => {
+      return mockVod2.loadAfter(mockVod, mockMasterManifest, mockMediaManifest);
+    }).then(() => {
+      const seqSegments = mockVod2.getLiveMediaSequenceSegments(1);
+      expect(seqSegments['2497000'][8][1]).toBe('ad03.ts');
+      expect(seqSegments['2497000'][9][0]).toBe(-1);
+      expect(seqSegments['2497000'][10][1]).toBe('ad11.ts');
+      done();
+    });    
   });
 });

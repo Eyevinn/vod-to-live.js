@@ -233,7 +233,9 @@ class HLSVod {
 
           for (let i = 0; i < m3u.items.PlaylistItem.length; i++) {
             if (this.splices[spliceIdx]) {
+              debug(this.splices[spliceIdx]);
               nextSplicePosition = this.splices[spliceIdx].position;
+              debug(`Next splice position ${nextSplicePosition}`);
               spliceBw = this._getNearestBandwidthForSplice(this.splices[spliceIdx], bw);
             } else {
               nextSplicePosition = null;
@@ -264,6 +266,7 @@ class HLSVod {
                 debug(`Inserting ${this.splices[spliceIdx].segments[spliceBw].length} ad segments`);
                 this.splices[spliceIdx].segments[spliceBw].forEach(v => {
                   this.segments[bw].push(v);
+                  position += v[0];
                 });
                 if (i != m3u.items.PlaylistItem.length - 1) {
                   // Only insert discontinuity after ad segments if this break is not at the end
@@ -274,11 +277,21 @@ class HLSVod {
               }
               spliceIdx++;
             }
-            this.segments[bw].push([
-              playlistItem.properties.duration,
-              segmentUri
-            ]);
-            position += playlistItem.properties.duration;
+            // Next splice is back-to-back?
+            if (this.splices[spliceIdx]) {
+              debug(`${this.splices[spliceIdx].position} < ${position}`);
+            }
+            if (this.splices[spliceIdx] && this.splices[spliceIdx].position <= position) {
+              debug(`Next splice is back-to-back, not inserting new segment`);
+              this.segments[bw].pop(); // Remove extra disc
+              i--;
+            } else {
+              this.segments[bw].push([
+                playlistItem.properties.duration,
+                segmentUri
+              ]);
+              position += playlistItem.properties.duration;
+            }
           }
           this.targetDuration[bw] = Math.ceil(this.segments[bw].map(el => el ? el[0] : 0).reduce((max, cur) => Math.max(max, cur), -Infinity));
           this.segmentsInitiated[bw] = true;
