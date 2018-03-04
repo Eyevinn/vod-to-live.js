@@ -143,7 +143,6 @@ describe("HLSVod with ad splicing", () => {
       expect(seqSegments['2497000'][6][0]).toBe(3);
       expect(seqSegments['2497000'][6][1]).toBe('ad11.ts');
       seqSegments = mockVod.getLiveMediaSequenceSegments(20);
-      console.log(seqSegments['2497000'])
       expect(seqSegments['2497000'][7][0]).toBe(-1);
       done();
     });
