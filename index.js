@@ -234,7 +234,6 @@ class HLSVod {
           for (let i = 0; i < m3u.items.PlaylistItem.length; i++) {
             if (this.splices[spliceIdx]) {
               nextSplicePosition = this.splices[spliceIdx].position;
-              debug(`Next splice position ${nextSplicePosition}`);
               spliceBw = this._getNearestBandwidthForSplice(this.splices[spliceIdx], bw);
             } else {
               nextSplicePosition = null;
@@ -280,7 +279,7 @@ class HLSVod {
             }
             // Next splice is back-to-back?
             if (this.splices[spliceIdx]) {
-              debug(`${this.splices[spliceIdx].position} <= ${position}`);
+              debug(`Next splice ${this.splices[spliceIdx].position} <= ${position}`);
             }
             if (this.splices[spliceIdx] && (this.splices[spliceIdx].position + diff) <= position) {
               debug(`Next splice is back-to-back, not inserting new segment`);
