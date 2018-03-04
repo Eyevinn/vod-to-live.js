@@ -233,7 +233,6 @@ class HLSVod {
 
           for (let i = 0; i < m3u.items.PlaylistItem.length; i++) {
             if (this.splices[spliceIdx]) {
-              debug(this.splices[spliceIdx]);
               nextSplicePosition = this.splices[spliceIdx].position;
               debug(`Next splice position ${nextSplicePosition}`);
               spliceBw = this._getNearestBandwidthForSplice(this.splices[spliceIdx], bw);
@@ -255,8 +254,10 @@ class HLSVod {
             } else {
               segmentUri = url.resolve(baseUrl, playlistItem.properties.uri);
             }
+            let diff = 0;
             if (nextSplicePosition != null && position + playlistItem.properties.duration > nextSplicePosition) {
               debug(`Inserting splice at ${bw}:${position} (${i})`);
+              diff = position - nextSplicePosition;
               if (this.segments[bw].length > 0) {
                 // Only insert discontinuity if this is not the first segment
                 debug(`Inserting discontinuity at ${bw}:${position} (${i}/${m3u.items.PlaylistItem.length})`);
@@ -281,8 +282,9 @@ class HLSVod {
             if (this.splices[spliceIdx]) {
               debug(`${this.splices[spliceIdx].position} <= ${position}`);
             }
-            if (this.splices[spliceIdx] && this.splices[spliceIdx].position <= position) {
+            if (this.splices[spliceIdx] && (this.splices[spliceIdx].position + diff) <= position) {
               debug(`Next splice is back-to-back, not inserting new segment`);
+              this.splices[spliceIdx].position += diff;
               this.segments[bw].pop(); // Remove extra disc
               i--;
             } else {
