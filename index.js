@@ -2,6 +2,7 @@ const m3u8 = require('m3u8');
 const request = require('request');
 const url = require('url');
 const debug = require('debug')('vod-to-live');
+const verbose = require('debug')('vod-to-live-verbose');
 
 class HLSVod {
   /**
@@ -257,7 +258,7 @@ class HLSVod {
             if (nextSplicePosition != null && position + playlistItem.properties.duration > nextSplicePosition) {
               debug(`Inserting splice at ${bw}:${position} (${i})`);
               diff = position - nextSplicePosition;
-              if (this.segments[bw].length > 0) {
+              if (this.segments[bw].length > 0 && this.segments[bw][this.segments[bw].length - 1][0] !== -1) {
                 // Only insert discontinuity if this is not the first segment
                 debug(`Inserting discontinuity at ${bw}:${position} (${i}/${m3u.items.PlaylistItem.length})`);
                 this.segments[bw].push([-1]);                
@@ -279,7 +280,7 @@ class HLSVod {
             }
             // Next splice is back-to-back?
             if (this.splices[spliceIdx]) {
-              debug(`Next splice ${this.splices[spliceIdx].position} <= ${position}`);
+              verbose(`Next splice ${this.splices[spliceIdx].position} <= ${position}`);
             }
             if (this.splices[spliceIdx] && (this.splices[spliceIdx].position + diff) <= position) {
               debug(`Next splice is back-to-back, not inserting new segment`);
@@ -340,7 +341,7 @@ class HLSVod {
   _getNearestBandwidthForSplice(splice, bandwidth) {
     const availableBandwidths = Object.keys(splice.segments);
 
-    debug(`Find ${bandwidth} in splice ${availableBandwidths}`);
+    verbose(`Find ${bandwidth} in splice ${availableBandwidths}`);
     for (let i = 0; i < availableBandwidths.length; i++) {
       if (bandwidth <= availableBandwidths[i]) {
         return availableBandwidths[i];

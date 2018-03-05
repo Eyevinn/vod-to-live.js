@@ -283,9 +283,12 @@ describe("HLSVod with ad splicing", () => {
       return mockVod2.loadAfter(mockVod, mockMasterManifest, mockMediaManifest);
     }).then(() => {
       const seqSegments = mockVod2.getLiveMediaSequenceSegments(1);
-      expect(seqSegments['2497000'][8][1]).toBe('ad03.ts');
-      expect(seqSegments['2497000'][9][0]).toBe(-1);
-      expect(seqSegments['2497000'][10][1]).toBe('ad11.ts');
+      console.log(seqSegments['2497000']);
+      expect(seqSegments['2497000'][4][0]).toBe(-1);
+      expect(seqSegments['2497000'][5][0]).not.toBe(-1);
+      expect(seqSegments['2497000'][7][1]).toBe('ad03.ts');
+      expect(seqSegments['2497000'][8][0]).toBe(-1);
+      expect(seqSegments['2497000'][9][1]).toBe('ad11.ts');
       done();
     });    
   });
