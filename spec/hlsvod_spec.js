@@ -292,3 +292,79 @@ describe("HLSVod with ad splicing", () => {
     });    
   });
 });
+
+describe("HLSVod with timeline", () => {
+  let mockMasterManifest;
+  let mockMediaManifest;
+
+  beforeEach(() => {
+    mockMasterManifest = function() {
+      return fs.createReadStream('testvectors/hls1/master.m3u8');
+    };
+    mockMediaManifest = function(bandwidth) {
+      return fs.createReadStream('testvectors/hls1/' + bandwidth + '.m3u8');
+    };
+  });
+
+  it("can be initiated with a non-zero timeoffset", done => {
+    const now = Date.now();
+    let mockVod = new HLSVod('http://mock.com/mock.m3u8', [], now);
+    mockVod.load(mockMasterManifest, mockMediaManifest)
+    .then(() => {
+      const count = mockVod.getLiveMediaSequencesCount();
+      let seqSegments = mockVod.getLiveMediaSequenceSegments(0);
+      expect(seqSegments['2497000'][0][2]).toEqual(now);
+      seqSegments = mockVod.getLiveMediaSequenceSegments(1);
+      expect(seqSegments['2497000'][5][2]).toEqual(now + 9*6);
+      seqSegments = mockVod.getLiveMediaSequenceSegments(count - 1);
+      expect(seqSegments['2497000'][5][2]).toEqual(now + 2637);
+      done();
+    });
+  });
+
+  it("can handle vod after another vod", done => {
+    const now = Date.now();
+    mockVod = new HLSVod('http://mock.com/mock.m3u8', [], now);
+    mockVod2 = new HLSVod('http://mock.com/mock2.m3u8', []);
+    mockVod.load(mockMasterManifest, mockMediaManifest)
+    .then(() => {
+      return mockVod2.loadAfter(mockVod, mockMasterManifest, mockMediaManifest);
+    }).then(() => {
+      const seqSegments = mockVod2.getLiveMediaSequenceSegments(0);
+      expect(seqSegments['2497000'][4][2]).toEqual(now + 2637);
+      expect(seqSegments['2497000'][6][2]).toEqual(now + 2637 + 9);
+      done();
+    });
+  });
+
+  it("can handle vod after another vod with two ads back-to-back", done => {
+    const splices = [
+      { 
+        position: 0.0,
+        segments: {
+          '2497000': [ [3, 'ad01.ts'], [3, 'ad02.ts'], [3, 'ad03.ts'], ],
+          '1497000': [ [3, 'ad01.ts'], [3, 'ad02.ts'], [3, 'ad03.ts'], ],
+        }
+      },
+      { 
+        position: 9.0,
+        segments: {
+          '2497000': [ [3, 'ad11.ts'], [3, 'ad12.ts'], [3, 'ad13.ts'], ],
+          '1497000': [ [3, 'ad11.ts'], [3, 'ad12.ts'], [3, 'ad13.ts'], ],
+        }
+      }
+    ];
+    const now = Date.now();
+    mockVod = new HLSVod('http://mock.com/mock.m3u8', [], now);
+    mockVod2 = new HLSVod('http://mock.com/mock2.m3u8', splices);
+    mockVod.load(mockMasterManifest, mockMediaManifest)
+    .then(() => {
+      return mockVod2.loadAfter(mockVod, mockMasterManifest, mockMediaManifest);
+    }).then(() => {
+      const seqSegments = mockVod2.getLiveMediaSequenceSegments(0);
+      expect(seqSegments['2497000'][4][2]).toEqual(now + 2637);
+      expect(seqSegments['2497000'][6][2]).toEqual(now + 2637 + 9);
+      done();
+    });
+  });
+});

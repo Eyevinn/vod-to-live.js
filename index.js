@@ -9,8 +9,9 @@ class HLSVod {
    * Create an HLS VOD instance
    * @param {string} vodManifestUri - the uri to the master manifest of the VOD
    * @param {Object} splices - an array of ad splice objects
+   * @param {number} timeOffset - time offset as unix timestamp ms
    */
-  constructor(vodManifestUri, splices) {
+  constructor(vodManifestUri, splices, timeOffset) {
     this.masterManifestUri = vodManifestUri;
     this.segments = {};
     this.mediaSequences = [];
@@ -20,6 +21,7 @@ class HLSVod {
     this.usageProfile = [];
     this.segmentsInitiated = {};
     this.splices = splices || [];
+    this.timeOffset = timeOffset || null;
   }
 
   /**
@@ -153,7 +155,12 @@ class HLSVod {
         this.segments[bw] = [];
       }
       for(let idx = 1; idx < lastMediaSequence.length; idx++) {
-        this.segments[bw].push(lastMediaSequence[idx]);
+        let q = lastMediaSequence[idx];
+        this.segments[bw].push(q);
+      }
+      const lastSeg = this.segments[bw][this.segments[bw].length - 1];
+      if (lastSeg[2]) {
+        this.timeOffset = lastSeg[2] + lastSeg[0];
       }
       this.segments[bw].push([-1, '']);
     }
@@ -225,6 +232,7 @@ class HLSVod {
           this.segments[bw] = [];
         } 
       }
+      let timelinePosition = 0;
   
       parser.on('m3u', m3u => {
         if (!this.segmentsInitiated[bw]) {
@@ -266,8 +274,13 @@ class HLSVod {
               if (this.splices[spliceIdx].segments[spliceBw]) {
                 debug(`Inserting ${this.splices[spliceIdx].segments[spliceBw].length} ad segments`);
                 this.splices[spliceIdx].segments[spliceBw].forEach(v => {
-                  this.segments[bw].push(v);
-                  position += v[0];
+                  let q = [ v[0], v[1] ];
+                  if (this.timeOffset != null) {
+                    q.push(this.timeOffset + timelinePosition);
+                  }
+                  this.segments[bw].push(q);
+                  position += q[0];
+                  timelinePosition += q[0];
                 });
                 if (i != m3u.items.PlaylistItem.length - 1) {
                   // Only insert discontinuity after ad segments if this break is not at the end
@@ -288,11 +301,13 @@ class HLSVod {
               this.segments[bw].pop(); // Remove extra disc
               i--;
             } else {
-              this.segments[bw].push([
-                playlistItem.properties.duration,
-                segmentUri
-              ]);
+              let q = [ playlistItem.properties.duration, segmentUri ];
+              if (this.timeOffset != null) {
+                q.push(this.timeOffset + timelinePosition);
+              }
+              this.segments[bw].push(q);
               position += playlistItem.properties.duration;
+              timelinePosition += playlistItem.properties.duration;
             }
           }
           this.targetDuration[bw] = Math.ceil(this.segments[bw].map(el => el ? el[0] : 0).reduce((max, cur) => Math.max(max, cur), -Infinity));
