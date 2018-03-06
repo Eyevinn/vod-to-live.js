@@ -126,15 +126,23 @@ class HLSVod {
       debug(this.mediaSequences[seqIdx]);
       debug(this.segments[bw]);
     }
+    let previousSegment = null;
     for (let i = 0; i < this.mediaSequences[seqIdx].segments[bw].length; i++) {
       const v = this.mediaSequences[seqIdx].segments[bw][i];
       if (v) {
+        if (previousSegment != null) {
+          if (previousSegment[0] === -1 && v[2]) {
+            const d = new Date(v[2])
+            m3u8 += "#EXT-X-PROGRAM-DATE-TIME:" + d.toISOString() + "\n";
+          }
+        }
         if (v[0] !== -1) {
           m3u8 += "#EXTINF:" + v[0] + "\n";
           m3u8 += v[1] + "\n";
         } else {
           m3u8 += "#EXT-X-DISCONTINUITY\n";
         }
+        previousSegment = v;
       }
     }
 

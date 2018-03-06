@@ -367,4 +367,24 @@ describe("HLSVod with timeline", () => {
       done();
     });
   });
+
+  it("outputs EXT-X-PROGRAM-DATE-TIME after discontinuity", done => {
+    const now = Date.now();
+    mockVod = new HLSVod('http://mock.com/mock.m3u8', [], now);
+    mockVod2 = new HLSVod('http://mock.com/mock2.m3u8', []);
+    mockVod.load(mockMasterManifest, mockMediaManifest)
+    .then(() => {
+      return mockVod2.loadAfter(mockVod, mockMasterManifest, mockMediaManifest);
+    }).then(() => {
+      let m3u8 = mockVod2.getLiveMediaSequences(0, '2497000', 0);
+      let m = m3u8.match('#EXT-X-DISCONTINUITY\n#EXT-X-PROGRAM-DATE-TIME:(.*)\n');
+      expect(m).toBeDefined();
+      // Make sure date-time is unchanged on next media sequence
+      d = m[1];
+      m3u8 = mockVod2.getLiveMediaSequences(0, '2497000', 1);
+      m = m3u8.match('#EXT-X-DISCONTINUITY\n#EXT-X-PROGRAM-DATE-TIME:(.*)\n');
+      expect(d).toEqual(m[1]);
+      done();
+    });
+  });
 });
