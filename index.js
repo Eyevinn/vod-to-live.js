@@ -132,7 +132,7 @@ class HLSVod {
       if (v) {
         if (previousSegment != null) {
           if (previousSegment[0] === -1 && v[2]) {
-            const d = new Date(v[2])
+            const d = new Date(v[2]);
             m3u8 += "#EXT-X-PROGRAM-DATE-TIME:" + d.toISOString() + "\n";
           }
         }
@@ -168,7 +168,7 @@ class HLSVod {
       }
       const lastSeg = this.segments[bw][this.segments[bw].length - 1];
       if (lastSeg[2]) {
-        this.timeOffset = lastSeg[2] + lastSeg[0];
+        this.timeOffset = lastSeg[2] + lastSeg[0]*1000;
       }
       this.segments[bw].push([-1, '']);
     }
@@ -288,7 +288,7 @@ class HLSVod {
                   }
                   this.segments[bw].push(q);
                   position += q[0];
-                  timelinePosition += q[0];
+                  timelinePosition += (q[0] * 1000);
                 });
                 if (i != m3u.items.PlaylistItem.length - 1) {
                   // Only insert discontinuity after ad segments if this break is not at the end
@@ -315,7 +315,7 @@ class HLSVod {
               }
               this.segments[bw].push(q);
               position += playlistItem.properties.duration;
-              timelinePosition += playlistItem.properties.duration;
+              timelinePosition += playlistItem.properties.duration * 1000;
             }
           }
           this.targetDuration[bw] = Math.ceil(this.segments[bw].map(el => el ? el[0] : 0).reduce((max, cur) => Math.max(max, cur), -Infinity));

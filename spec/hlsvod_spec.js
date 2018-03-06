@@ -315,9 +315,9 @@ describe("HLSVod with timeline", () => {
       let seqSegments = mockVod.getLiveMediaSequenceSegments(0);
       expect(seqSegments['2497000'][0][2]).toEqual(now);
       seqSegments = mockVod.getLiveMediaSequenceSegments(1);
-      expect(seqSegments['2497000'][5][2]).toEqual(now + 9*6);
+      expect(seqSegments['2497000'][5][2]).toEqual(now + 9*6*1000);
       seqSegments = mockVod.getLiveMediaSequenceSegments(count - 1);
-      expect(seqSegments['2497000'][5][2]).toEqual(now + 2637);
+      expect(seqSegments['2497000'][5][2]).toEqual(now + 2637 * 1000);
       done();
     });
   });
@@ -331,8 +331,8 @@ describe("HLSVod with timeline", () => {
       return mockVod2.loadAfter(mockVod, mockMasterManifest, mockMediaManifest);
     }).then(() => {
       const seqSegments = mockVod2.getLiveMediaSequenceSegments(0);
-      expect(seqSegments['2497000'][4][2]).toEqual(now + 2637);
-      expect(seqSegments['2497000'][6][2]).toEqual(now + 2637 + 9);
+      expect(seqSegments['2497000'][4][2]).toEqual(now + 2637 * 1000);
+      expect(seqSegments['2497000'][6][2]).toEqual(now + 2637*1000 +  9*1000);
       done();
     });
   });
@@ -362,8 +362,8 @@ describe("HLSVod with timeline", () => {
       return mockVod2.loadAfter(mockVod, mockMasterManifest, mockMediaManifest);
     }).then(() => {
       const seqSegments = mockVod2.getLiveMediaSequenceSegments(0);
-      expect(seqSegments['2497000'][4][2]).toEqual(now + 2637);
-      expect(seqSegments['2497000'][6][2]).toEqual(now + 2637 + 9);
+      expect(seqSegments['2497000'][4][2]).toEqual(now + 2637 * 1000);
+      expect(seqSegments['2497000'][6][2]).toEqual(now + 2637*1000 + 9*1000);
       done();
     });
   });
