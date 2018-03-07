@@ -388,6 +388,16 @@ class HLSVod {
 
   _getNearestBandwidthForSplice(splice, bandwidth) {
     const availableBandwidths = Object.keys(splice.segments);
+    if (this.usageProfileMapping != null && availableBandwidths.length === Object.keys(this.usageProfileMapping).length) {
+      let mapping = {};
+      const sortedAvailable = availableBandwidths.sort((a, b) => a -b );
+      const sortedUsageProfile = Object.keys(this.usageProfileMapping).sort((a, b) => a-b);
+      for (let i = 0; i < sortedAvailable.length; i++) {
+        mapping[sortedUsageProfile[i]] = sortedAvailable[i];
+      }
+      debug(`We have a splice mapping. Trying to match ${bandwidth} with ${Object.keys(mapping)}`);
+      return mapping[bandwidth];
+    }
 
     verbose(`Find ${bandwidth} in splice ${availableBandwidths}`);
     for (let i = 0; i < availableBandwidths.length; i++) {
