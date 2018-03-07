@@ -22,6 +22,8 @@ class HLSVod {
     this.segmentsInitiated = {};
     this.splices = splices || [];
     this.timeOffset = timeOffset || null;
+    this.usageProfileMapping = null;
+    this.usageProfileMappingRev = null;
   }
 
   /**
@@ -38,6 +40,22 @@ class HLSVod {
         if (m) {
           baseUrl = m[1] + '/';
         }
+
+        if (this.previousVod && this.previousVod.getBandwidths().length === m3u.items.StreamItem.length) {
+          debug(`Previous VOD bandwidths matches amount of current. A mapping is possible`);
+          const previousBandwidths = this.previousVod.getBandwidths().sort((a, b) => a - b);
+          this.usageProfileMapping = {};
+          this.usageProfileMappingRev = {};
+          const bandwidths = m3u.items.StreamItem.sort((a, b) => {
+            return a.attributes.attributes['bandwidth'] - b.attributes.attributes['bandwidth'];
+          }).map(v => v.attributes.attributes['bandwidth']);
+          debug(`${previousBandwidths} : ${bandwidths}`)
+          for (let i = 0; i < previousBandwidths.length; i++) {
+            this.usageProfileMapping[previousBandwidths[i]] = bandwidths[i] + '';
+            this.usageProfileMappingRev[bandwidths[i]] = previousBandwidths[i];
+          }
+        }
+
         for (let i = 0; i < m3u.items.StreamItem.length; i++) {
           const streamItem = m3u.items.StreamItem[i];        
           let mediaManifestUrl = url.resolve(baseUrl, streamItem.properties.uri);
@@ -336,6 +354,9 @@ class HLSVod {
   }
 
   _getNearestBandwidth(bandwidth) {
+    if (this.usageProfileMappingRev != null) {
+      return this.usageProfileMappingRev[bandwidth];
+    }
     const filteredBandwidths = Object.keys(this.segments).filter(bw => this.segments[bw].length > 0);
     const availableBandwidths = filteredBandwidths.sort((a,b) => a - b);
 
@@ -348,7 +369,11 @@ class HLSVod {
     return availableBandwidths[availableBandwidths.length - 1];
   }
 
-  _getNearestBandwidthWithInitiatedSegments(bandwidth) {
+  _getNearestBandwidthWithInitiatedSegments(bandwidthToMatch) {
+    let bandwidth = bandwidthToMatch;
+    if (this.usageProfileMapping != null) {
+      bandwidth = this.usageProfileMapping[bandwidthToMatch];
+    }
     const filteredBandwidths = Object.keys(this.segments).filter(bw => this.segmentsInitiated[bw]);
     const availableBandwidths = filteredBandwidths.sort((a,b) => a - b);
 

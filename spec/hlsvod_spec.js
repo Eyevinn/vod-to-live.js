@@ -388,3 +388,122 @@ describe("HLSVod with timeline", () => {
     });
   });
 });
+
+describe("HLSVod with not equal usage profiles", () => {
+  let mockMasterManifest = [];
+  let mockMediaManifest = [];
+
+  beforeEach(() => {
+    mockMasterManifest.push(function() {
+      return fs.createReadStream('testvectors/hls1/master.m3u8');
+    });
+    mockMasterManifest.push(function() {
+      return fs.createReadStream('testvectors/hls2/master.m3u8');
+    });
+    mockMasterManifest.push(function() {
+      return fs.createReadStream('testvectors/hls3/master.m3u8');
+    });
+    mockMediaManifest.push(function(bandwidth) {
+      return fs.createReadStream('testvectors/hls1/' + bandwidth + '.m3u8');
+    });
+    mockMediaManifest.push(function(bandwidth) {
+      return fs.createReadStream('testvectors/hls2/' + bandwidth + '.m3u8');
+    });
+    mockMediaManifest.push(function(bandwidth) {
+      return fs.createReadStream('testvectors/hls3/' + bandwidth + '.m3u8');
+    });
+  });
+
+  it("can find a correct match", done => {
+    mockVod = new HLSVod('http://mock.com/mock.m3u8');
+    mockVod2 = new HLSVod('http://mock.com/mock2.m3u8');
+    mockVod3 = new HLSVod('http://mock.com/mock3.m3u8');
+    mockVod.load(mockMasterManifest[0], mockMediaManifest[0])
+    .then(() => {
+      return mockVod2.loadAfter(mockVod, mockMasterManifest[1], mockMediaManifest[1]);
+    }).then(() => {
+      const seqSegments = mockVod2.getLiveMediaSequenceSegments(0);
+      expect(seqSegments['2497000'][6][1]).toEqual('https://tv4play-i.akamaihd.net/i/mp4root/2018-01-26/pid200032972(3953564_,T3MP445,T3MP435,T3MP425,T3MP415,T3MP48,T3MP43,T3MP4130,).mp4.csmil/segment1_2_av.ts');
+      return mockVod3.loadAfter(mockVod2, mockMasterManifest[2], mockMediaManifest[2]);
+    }).then(() => {
+      const seqSegments = mockVod3.getLiveMediaSequenceSegments(0);
+      expect(seqSegments['2497000'][6][1]).toEqual('https://tv4play-i.akamaihd.net/i/mp4root/2018-01-26/pid200032972(3953564_,T3MP445,T3MP435,T3MP425,T3MP415,T3MP48,T3MP43,T3MP4130,).mp4.csmil/segment1_2_av.ts');
+      done();
+    });
+  });
+
+  it("can find a correct match with ad splices", done => {
+    const splices = [
+      { 
+        position: 0.0,
+        segments: {
+          '4497000': [ [3, 'ad01-4.ts'], [3, 'ad02-4.ts'], [3, 'ad03-4.ts'], ],
+          '3496000': [ [3, 'ad01-3.ts'], [3, 'ad02-3.ts'], [3, 'ad03-3.ts'], ],
+          '2497000': [ [3, 'ad01-2.ts'], [3, 'ad02-2.ts'], [3, 'ad03-2.ts'], ],
+          '1497000': [ [3, 'ad01-1.ts'], [3, 'ad02-1.ts'], [3, 'ad03-1.ts'], ],
+        }
+      },
+      { 
+        position: 9.0,
+        segments: {
+          '4497000': [ [3, 'ad01-4.ts'], [3, 'ad02-4.ts'], [3, 'ad03-4.ts'], ],
+          '3496000': [ [3, 'ad01-3.ts'], [3, 'ad02-3.ts'], [3, 'ad03-3.ts'], ],
+          '2497000': [ [3, 'ad01-2.ts'], [3, 'ad02-2.ts'], [3, 'ad03-2.ts'], ],
+          '1497000': [ [3, 'ad01-1.ts'], [3, 'ad02-1.ts'], [3, 'ad03-1.ts'], ],
+        }
+      }
+    ];
+    mockVod = new HLSVod('http://mock.com/mock.m3u8');
+    mockVod2 = new HLSVod('http://mock.com/mock2.m3u8', splices);
+    mockVod3 = new HLSVod('http://mock.com/mock3.m3u8', splices);
+    mockVod.load(mockMasterManifest[0], mockMediaManifest[0])
+    .then(() => {
+      return mockVod2.loadAfter(mockVod, mockMasterManifest[1], mockMediaManifest[1]);
+    }).then(() => {
+      const seqSegments = mockVod2.getLiveMediaSequenceSegments(0);
+      expect(seqSegments['2497000'][6][1]).toEqual('ad01-2.ts');
+      return mockVod3.loadAfter(mockVod2, mockMasterManifest[2], mockMediaManifest[2]);
+    }).then(() => {
+      const seqSegments = mockVod3.getLiveMediaSequenceSegments(0);
+      expect(seqSegments['2497000'][6][1]).toEqual('ad01-2.ts');
+      done();
+    });
+  });
+
+  it("can find a correct match with ad splices not matching", done => {
+    const splices = [
+      { 
+        position: 0.0,
+        segments: {
+          '3496000': [ [3, 'ad01-3.ts'], [3, 'ad02-3.ts'], [3, 'ad03-3.ts'], ],
+          '2497000': [ [3, 'ad01-2.ts'], [3, 'ad02-2.ts'], [3, 'ad03-2.ts'], ],
+          '1497000': [ [3, 'ad01-1.ts'], [3, 'ad02-1.ts'], [3, 'ad03-1.ts'], ],
+        }
+      },
+      { 
+        position: 9.0,
+        segments: {
+          '4497000': [ [3, 'ad01-4.ts'], [3, 'ad02-4.ts'], [3, 'ad03-4.ts'], ],
+          '3496000': [ [3, 'ad01-3.ts'], [3, 'ad02-3.ts'], [3, 'ad03-3.ts'], ],
+          '2497000': [ [3, 'ad01-2.ts'], [3, 'ad02-2.ts'], [3, 'ad03-2.ts'], ],
+          '1497000': [ [3, 'ad01-1.ts'], [3, 'ad02-1.ts'], [3, 'ad03-1.ts'], ],
+        }
+      }
+    ];
+    mockVod = new HLSVod('http://mock.com/mock.m3u8');
+    mockVod2 = new HLSVod('http://mock.com/mock2.m3u8', splices);
+    mockVod3 = new HLSVod('http://mock.com/mock3.m3u8', splices);
+    mockVod.load(mockMasterManifest[0], mockMediaManifest[0])
+    .then(() => {
+      return mockVod2.loadAfter(mockVod, mockMasterManifest[1], mockMediaManifest[1]);
+    }).then(() => {
+      const seqSegments = mockVod2.getLiveMediaSequenceSegments(0);
+      expect(seqSegments['2497000'][6][1]).toEqual('ad01-2.ts');
+      return mockVod3.loadAfter(mockVod2, mockMasterManifest[2], mockMediaManifest[2]);
+    }).then(() => {
+      const seqSegments = mockVod3.getLiveMediaSequenceSegments(0);
+      expect(seqSegments['2497000'][6][1]).toEqual('ad01-2.ts');
+      done();
+    });
+  });
+});
