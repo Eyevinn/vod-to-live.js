@@ -395,7 +395,7 @@ class HLSVod {
       for (let i = 0; i < sortedAvailable.length; i++) {
         mapping[sortedUsageProfile[i]] = sortedAvailable[i];
       }
-      debug(`We have a splice mapping. Trying to match ${bandwidth} with ${Object.keys(mapping)}`);
+      verbose(`We have a splice mapping. Trying to match ${bandwidth} with ${Object.keys(mapping)}`);
       return mapping[bandwidth];
     }
 
