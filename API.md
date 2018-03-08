@@ -10,7 +10,7 @@
     * [.getLiveMediaSequenceSegments(seqIdx)](#HLSVod+getLiveMediaSequenceSegments)
     * [.getBandwidths()](#HLSVod+getBandwidths)
     * [.getLiveMediaSequencesCount()](#HLSVod+getLiveMediaSequencesCount)
-    * [.getLiveMediaSequences(offset, bandwidth, seqIdx)](#HLSVod+getLiveMediaSequences)
+    * [.getLiveMediaSequences(offset, bandwidth, seqIdx, discOffset)](#HLSVod+getLiveMediaSequences)
 
 <a name="new_HLSVod_new"></a>
 
@@ -67,7 +67,7 @@ Get the number of media sequences for this VOD
 **Kind**: instance method of [<code>HLSVod</code>](#HLSVod)  
 <a name="HLSVod+getLiveMediaSequences"></a>
 
-### hlsVod.getLiveMediaSequences(offset, bandwidth, seqIdx)
+### hlsVod.getLiveMediaSequences(offset, bandwidth, seqIdx, discOffset)
 Get the HLS live media sequence for a specific media sequence and bandwidth
 
 **Kind**: instance method of [<code>HLSVod</code>](#HLSVod)  
@@ -77,4 +77,5 @@ Get the HLS live media sequence for a specific media sequence and bandwidth
 | offset | <code>number</code> | add this offset to all media sequences in the EXT-X-MEDIA-SEQUENCE tag |
 | bandwidth | <code>string</code> |  |
 | seqIdx | <code>number</code> |  |
+| discOffset | <code>number</code> | add this offset to all discontinuity sequences in the EXT-X-DISCONTINUITY-SEQUENCE tag |
 
