@@ -24,6 +24,7 @@ class HLSVod {
     this.timeOffset = timeOffset || null;
     this.usageProfileMapping = null;
     this.usageProfileMappingRev = null;
+    this.discontinuities = {};
   }
 
   /**
@@ -131,14 +132,20 @@ class HLSVod {
    * @param {number} offset - add this offset to all media sequences in the EXT-X-MEDIA-SEQUENCE tag
    * @param {string} bandwidth
    * @param {number} seqIdx 
+   * @param {number} discOffset - add this offset to all discontinuity sequences in the EXT-X-DISCONTINUITY-SEQUENCE tag
    */
-  getLiveMediaSequences(offset, bandwidth, seqIdx) {
+  getLiveMediaSequences(offset, bandwidth, seqIdx, discOffset) {
     const bw = this._getNearestBandwidthWithInitiatedSegments(bandwidth);
     debug(`Get live media sequence [${seqIdx}] for bw=${bw} (requested bw ${bandwidth})`);
     let m3u8 = "#EXTM3U\n";
     m3u8 += "#EXT-X-VERSION:3\n";
     m3u8 += "#EXT-X-TARGETDURATION:" + this.targetDuration[bw] + "\n";
     m3u8 += "#EXT-X-MEDIA-SEQUENCE:" + (offset + seqIdx) + "\n";
+    let discInOffset = discOffset;
+    if (discInOffset == null) {
+      discInOffset = 0;
+    }
+    m3u8 += "#EXT-X-DISCONTINUITY-SEQUENCE:" + (discInOffset + this.discontinuities[seqIdx]) + "\n";
     if (!this.mediaSequences[seqIdx]) {
       debug('No segments in media sequence!');
       debug(this.mediaSequences[seqIdx]);
@@ -171,6 +178,10 @@ class HLSVod {
     return this.usageProfile;
   }
 
+  getLastDiscontinuity() {
+    return this.discontinuities[this.mediaSequences.length - 1];
+  }
+
   _loadPrevious() {
     const previousVodSeqCount = this.previousVod.getLiveMediaSequencesCount();
     const bandwidths = this.previousVod.getBandwidths();
@@ -199,6 +210,7 @@ class HLSVod {
       let duration = 0;
       const bw = this._getFirstBwWithSegments()
       let sequence = {};
+
       while (segIdx != this.segments[bw].length) {
         if (this.segments[bw][segIdx][0] !== -1) {
           duration += this.segments[bw][segIdx][0];
@@ -227,6 +239,18 @@ class HLSVod {
       if (!this.mediaSequences) {
         reject('Failed to init media sequences');
       } else {
+        let discSeqNo = 0;
+        this.discontinuities[0] = discSeqNo;
+        for (let seqNo = 0; seqNo < this.mediaSequences.length; seqNo++) {
+          const mseq = this.mediaSequences[seqNo];
+          const bwIdx = Object.keys(mseq.segments)[0];
+          this.discontinuities[seqNo] = discSeqNo;
+          if (mseq.segments[bwIdx][0][0] === -1) {
+            debug(`Discontinuity in first segment of media seq ${seqNo}`);
+            discSeqNo++;
+            debug(`Increasing discont sequence ${discSeqNo}`);
+          }
+        }
         resolve();
       }
     });

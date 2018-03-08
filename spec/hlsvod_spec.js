@@ -378,12 +378,81 @@ describe("HLSVod with timeline", () => {
     }).then(() => {
       let m3u8 = mockVod2.getLiveMediaSequences(0, '2497000', 0);
       let m = m3u8.match('#EXT-X-DISCONTINUITY\n#EXT-X-PROGRAM-DATE-TIME:(.*)\n');
-      expect(m).toBeDefined();
+      expect(m).not.toBeNull();
       // Make sure date-time is unchanged on next media sequence
       d = m[1];
       m3u8 = mockVod2.getLiveMediaSequences(0, '2497000', 1);
       m = m3u8.match('#EXT-X-DISCONTINUITY\n#EXT-X-PROGRAM-DATE-TIME:(.*)\n');
       expect(d).toEqual(m[1]);
+      done();
+    });
+  });
+
+  it("outputs the correct EXT-X-DISCONTINUITY-SEQUENCE", done => {
+    mockVod = new HLSVod('http://mock.com/mock.m3u8', []);
+    mockVod2 = new HLSVod('http://mock.com/mock2.m3u8', []);
+    mockVod.load(mockMasterManifest, mockMediaManifest)
+    .then(() => {
+      return mockVod2.loadAfter(mockVod, mockMasterManifest, mockMediaManifest);
+    }).then(() => {
+      let m3u8 = mockVod2.getLiveMediaSequences(0, '2497000', 0);
+      let m;
+      m = m3u8.match('#EXT-X-DISCONTINUITY-SEQUENCE:0\n');
+      expect(m).not.toBeNull();
+      m3u8 = mockVod2.getLiveMediaSequences(0, '2497000', 5);
+      m = m3u8.match('#EXT-X-DISCONTINUITY-SEQUENCE:0\n');
+      expect(m).not.toBeNull();
+      m3u8 = mockVod2.getLiveMediaSequences(0, '2497000', 6);
+      m = m3u8.match('#EXT-X-DISCONTINUITY-SEQUENCE:1\n');      
+      expect(m).not.toBeNull();
+      expect(mockVod2.getLastDiscontinuity()).toEqual(1);
+      m3u8 = mockVod2.getLiveMediaSequences(0, '2497000', 6, 7);
+      m = m3u8.match('#EXT-X-DISCONTINUITY-SEQUENCE:8\n');
+      expect(m).not.toBeNull();
+      done();
+    });
+  });
+
+  it("outputs the correct EXT-X-DISCONTINUITY-SEQUENCE with ads", done => {
+    const splices = [
+      { 
+        position: 0.0,
+        segments: {
+          '2497000': [ [3, 'ad01.ts'], [3, 'ad02.ts'], [3, 'ad03.ts'], ],
+          '1497000': [ [3, 'ad01.ts'], [3, 'ad02.ts'], [3, 'ad03.ts'], ],
+        }
+      },
+      { 
+        position: 9.0,
+        segments: {
+          '2497000': [ [3, 'ad11.ts'], [3, 'ad12.ts'], [3, 'ad13.ts'], ],
+          '1497000': [ [3, 'ad11.ts'], [3, 'ad12.ts'], [3, 'ad13.ts'], ],
+        }
+      }
+    ];
+    mockVod = new HLSVod('http://mock.com/mock.m3u8', []);
+    mockVod2 = new HLSVod('http://mock.com/mock2.m3u8', splices);
+    mockVod.load(mockMasterManifest, mockMediaManifest)
+    .then(() => {
+      return mockVod2.loadAfter(mockVod, mockMasterManifest, mockMediaManifest);
+    }).then(() => {
+      let m3u8 = mockVod2.getLiveMediaSequences(0, '2497000', 0);
+      let m;
+      m = m3u8.match('#EXT-X-DISCONTINUITY-SEQUENCE:0\n');
+      expect(m).not.toBeNull();
+      m3u8 = mockVod2.getLiveMediaSequences(0, '2497000', 5);
+      m = m3u8.match('#EXT-X-DISCONTINUITY-SEQUENCE:0\n');
+      expect(m).not.toBeNull();
+      m3u8 = mockVod2.getLiveMediaSequences(0, '2497000', 6);
+      m = m3u8.match('#EXT-X-DISCONTINUITY-SEQUENCE:1\n');
+      expect(m).not.toBeNull();
+      m3u8 = mockVod2.getLiveMediaSequences(0, '2497000', 10);
+      m = m3u8.match('#EXT-X-DISCONTINUITY-SEQUENCE:2\n');
+      expect(m).not.toBeNull();
+      expect(mockVod2.getLastDiscontinuity()).toEqual(3);
+      m3u8 = mockVod2.getLiveMediaSequences(0, '2497000', 10, 7);
+      m = m3u8.match('#EXT-X-DISCONTINUITY-SEQUENCE:9\n');
+      expect(m).not.toBeNull();
       done();
     });
   });
