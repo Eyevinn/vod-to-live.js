@@ -11,6 +11,8 @@
     * [.getBandwidths()](#HLSVod+getBandwidths)
     * [.getLiveMediaSequencesCount()](#HLSVod+getLiveMediaSequencesCount)
     * [.getLiveMediaSequences(offset, bandwidth, seqIdx, discOffset)](#HLSVod+getLiveMediaSequences)
+    * [.getUsageProfiles()](#HLSVod+getUsageProfiles)
+    * [.getLastDiscontinuity()](#HLSVod+getLastDiscontinuity)
 
 <a name="new_HLSVod_new"></a>
 
@@ -79,3 +81,15 @@ Get the HLS live media sequence for a specific media sequence and bandwidth
 | seqIdx | <code>number</code> |  |
 | discOffset | <code>number</code> | add this offset to all discontinuity sequences in the EXT-X-DISCONTINUITY-SEQUENCE tag |
 
+<a name="HLSVod+getUsageProfiles"></a>
+
+### hlsVod.getUsageProfiles()
+Get the usage profile for this VOD
+
+**Kind**: instance method of [<code>HLSVod</code>](#HLSVod)  
+<a name="HLSVod+getLastDiscontinuity"></a>
+
+### hlsVod.getLastDiscontinuity()
+Get the last discontinuity sequence number
+
+**Kind**: instance method of [<code>HLSVod</code>](#HLSVod)  
