@@ -2,9 +2,9 @@ const crypto = require('crypto');
 const HLSVod = require('../index.js');
 
 const exampleVod = [
-  "https://maitv-vod.lab.eyevinn.technology/streaming+tech+2017+HLS/Arash/Arash.m3u8",
-  "https://maitv-vod.lab.eyevinn.technology/streaming+tech+2017+HLS/Linden/Linden.m3u8",
-  "https://maitv-vod.lab.eyevinn.technology/streaming+tech+2017+HLS/Ozer/Ozer.m3u8",
+  "https://maitv-vod.lab.eyevinn.technology/VINN.mp4/master.m3u8",
+  "https://maitv-vod.lab.eyevinn.technology/tearsofsteel_4k.mov/master.m3u8",
+  "https://maitv-vod.lab.eyevinn.technology/Attjobbapavinnter.mp4/master.m3u8",
 ];
 
 const SessionState = Object.freeze({
@@ -14,11 +14,11 @@ const SessionState = Object.freeze({
 });
 
 class Session {
-  constructor(usageProfile) {
-    this._usageProfile = usageProfile;
+  constructor() {
     this._sessionId = crypto.randomBytes(20).toString('hex');
     this._state = {
       mediaSeq: 0,
+      discSeq: 0,
       vodMediaSeq: 0,
       state: SessionState.VOD_INIT,
     };
@@ -32,8 +32,7 @@ class Session {
   getMediaManifest(bw) {
     return new Promise((resolve, reject) => {
       this._tick().then(() => {
-        const realBw = this._getNearestBandwidth(bw);
-        const m3u8 = this.currentVod.getLiveMediaSequences(this._state.mediaSeq, realBw, this._state.vodMediaSeq);
+        const m3u8 = this.currentVod.getLiveMediaSequences(this._state.mediaSeq, bw, this._state.vodMediaSeq, this._state.discSeq);
         this._state.vodMediaSeq++;
         resolve(m3u8);
       }).catch(reject);
@@ -44,10 +43,9 @@ class Session {
     return new Promise((resolve, reject) => {
       this._tick().then(() => {
         let m3u8 = "#EXTM3U\n";
-        Object.keys(this._usageProfile).forEach(bw => {
-          const v = this._usageProfile[bw];
-          m3u8 += '#EXT-X-STREAM-INF:BANDWIDTH=' + bw + ',RESOLUTION=' + v[0] + ',CODECS="' + v[1] + '"\n';
-          m3u8 += "master" + bw + ".m3u8;session=" + this._sessionId + "\n";
+        this.currentVod.getUsageProfiles().forEach(profile => {
+          m3u8 += '#EXT-X-STREAM-INF:BANDWIDTH=' + profile.bw + ',RESOLUTION=' + profile.resolution + ',CODECS="' + profile.codecs + '"\n';
+          m3u8 += "master" + profile.bw + ".m3u8;session=" + this._sessionId + "\n";
         });
         resolve(m3u8);
       }).catch(reject);
@@ -80,6 +78,7 @@ class Session {
         case SessionState.VOD_NEXT_INIT:
           console.log("[VOD_NEXT_INIT]");
           const length = this.currentVod.getLiveMediaSequencesCount();
+          const lastDiscontinuity = this.currentVod.getLastDiscontinuity();
           let newVod;
           this._getNextVod().then(hlsVod => {
             newVod = hlsVod;
@@ -89,6 +88,7 @@ class Session {
             this._state.state = SessionState.VOD_PLAYING;
             this._state.vodMediaSeq = 0;
             this._state.mediaSeq += length;
+            this._state.discSeq += lastDiscontinuity;
             resolve();
           });
           break;
@@ -106,15 +106,6 @@ class Session {
       const newVod = new HLSVod(exampleVod[rndIdx|0]);
       resolve(newVod);
     });
-  }
-
-  _getNearestBandwidth(bandwidth) {
-    const availableBandwidths = this.currentVod.getBandwidths().sort((a,b) => b - a);
-    for (let i = 0; i < availableBandwidths.length; i++) {
-      if (bandwidth >= availableBandwidths[i]) {
-        return availableBandwidths[i];
-      }
-    }
   }
 }
 
