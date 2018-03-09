@@ -174,13 +174,22 @@ class HLSVod {
     return m3u8;
   }
 
+  /**
+   * Get the usage profile for this VOD
+   */
   getUsageProfiles() {
     return this.usageProfile;
   }
 
+  /**
+   * Get the last discontinuity sequence number
+   */
   getLastDiscontinuity() {
     return this.discontinuities[this.mediaSequences.length - 1];
   }
+
+
+  // ----- PRIVATE METHODS BELOW ----
 
   _loadPrevious() {
     const previousVodSeqCount = this.previousVod.getLiveMediaSequencesCount();
@@ -272,6 +281,7 @@ class HLSVod {
       let bw = bandwidth;
       let spliceBw = bandwidth;
       debug(`Loading media manifest for bandwidth=${bw}`);
+      debug(`Media manifest URI: ${mediaManifestUri}`);
 
       if (this.previousVod) {
         debug(`We have a previous VOD and need to match ${bw} with ${Object.keys(this.segments)}`);
@@ -395,18 +405,20 @@ class HLSVod {
 
   _getNearestBandwidthWithInitiatedSegments(bandwidthToMatch) {
     let bandwidth = bandwidthToMatch;
-    if (this.usageProfileMapping != null) {
-      bandwidth = this.usageProfileMapping[bandwidthToMatch];
-    }
     const filteredBandwidths = Object.keys(this.segments).filter(bw => this.segmentsInitiated[bw]);
     const availableBandwidths = filteredBandwidths.sort((a,b) => a - b);
 
     debug(`Find ${bandwidth} in ${availableBandwidths}`);
+    const exactMatch = availableBandwidths.find(a => a == bandwidth);
+    if (exactMatch) {
+      return exactMatch;
+    }
     for (let i = 0; i < availableBandwidths.length; i++) {
       if (bandwidth <= availableBandwidths[i]) {
         return availableBandwidths[i];
       }
     }
+    debug('No match found - using fallback');
     return availableBandwidths[availableBandwidths.length - 1];    
   }
 
