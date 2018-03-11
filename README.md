@@ -55,6 +55,7 @@ to yield the following media sequences
 
 ```
 #EXT-X-MEDIA-SEQUENCE:3
+#EXT-X-DISCONTINUITY-SEQUENCE:0
 #EXTINF:9
 seg3.ts
 #EXTINF:4
@@ -66,6 +67,7 @@ segB1.ts
 
 ```
 #EXT-X-MEDIA-SEQUENCE:4
+#EXT-X-DISCONTINUITY-SEQUENCE:0
 #EXTINF:4
 seg4.ts
 #EXT-X-DISCONTINUITY
@@ -77,6 +79,7 @@ segB2.ts
 
 ```
 #EXT-X-MEDIA-SEQUENCE:5
+#EXT-X-DISCONTINUITY-SEQUENCE:0
 #EXT-X-DISCONTINUITY
 #EXTINF:9
 segB1.ts
@@ -94,7 +97,7 @@ live HLS stream.
 
 ## Example
 
-    $ npm install --save vod-to-live
+    $ npm install --save vod-to-live.js
 
 ```
 const HLSVod = require('vod-to-live.js');
@@ -122,3 +125,12 @@ To try it out point your HLS player to `http://localhost:8000/live/master.m3u8`
 
 
 
+# License (MIT)
+
+Copyright 2018 Eyevinn Technology
+
+Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the "Software"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
