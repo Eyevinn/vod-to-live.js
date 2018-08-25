@@ -576,3 +576,44 @@ describe("HLSVod with not equal usage profiles", () => {
     });
   });
 });
+
+describe("HLSVod with separate audio variants", () => {
+  let mockMasterManifest;
+  let mockMediaManifest;
+
+  beforeEach(() => {
+    mockMasterManifest = function() {
+      return fs.createReadStream('testvectors/hls4/master.m3u8');
+    };
+    mockMediaManifest = function(bandwidth) {
+      const fname = {
+        '354000': 'video-241929.m3u8',
+        '819000': 'video-680761.m3u8',
+        '1538000': 'video-1358751.m3u8',
+        '2485000': 'video-2252188.m3u8',
+        '3396000': 'video-3112126.m3u8'
+      };
+      return fs.createReadStream('testvectors/hls4/' + fname[bandwidth]);
+    };
+    mockAudioManifest = function(groupId) {
+      const fname = {
+        'audio-aacl-96': 'audio-96000.m3u8'
+      };
+      return fs.createReadStream('testvectors/hls4/' + fname[groupId]);
+    }
+  });
+
+  it("returns the correct number of bandwidths", done => {
+    mockVod = new HLSVod('http://mock.com/mock.m3u8');
+    mockVod.load(mockMasterManifest, mockMediaManifest, mockAudioManifest)
+    .then(() => {
+      expect(mockVod.getBandwidths().length).toBe(5);
+      expect(mockVod.getBandwidths()).toEqual(['354000', '819000', '1538000', '2485000', '3396000']);
+      expect(mockVod.getAudioGroups().length).toBe(1);
+      expect(mockVod.getAudioGroups()).toEqual(['audio-aacl-96']);
+      const seqAudioSegments = mockVod.getLiveMediaSequenceAudioSegments('audio-aacl-96', 0);
+      expect(seqAudioSegments[4][1]).toEqual('http://mock.com/1woxvooiidb(11186147_ISMUSP)-audio=96000-5.aac');
+      done();
+    });
+  });
+});
