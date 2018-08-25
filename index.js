@@ -245,6 +245,15 @@ class HLSVod {
           segIdx = segOffset;
         }
       }
+      if (this.mediaSequences.length === 0 && duration < this.SEQUENCE_DURATION) {
+        duration = 0;
+        this.mediaSequences.push({
+          segments: sequence,
+          audioSegments: audioSequence
+        });
+        sequence = [];
+        audioSequence = [];
+      }
       if (!this.mediaSequences) {
         reject('Failed to init media sequences');
       } else {
