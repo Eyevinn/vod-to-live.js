@@ -8,6 +8,7 @@
     * [.load()](#HLSVod+load)
     * [.loadAfter(previousVod)](#HLSVod+loadAfter)
     * [.getLiveMediaSequenceSegments(seqIdx)](#HLSVod+getLiveMediaSequenceSegments)
+    * [.getLiveMediaSequenceAudioSegments(audioGroupId, seqIdx)](#HLSVod+getLiveMediaSequenceAudioSegments)
     * [.getBandwidths()](#HLSVod+getBandwidths)
     * [.getLiveMediaSequencesCount()](#HLSVod+getLiveMediaSequencesCount)
     * [.getLiveMediaSequences(offset, bandwidth, seqIdx, discOffset)](#HLSVod+getLiveMediaSequences)
@@ -53,6 +54,18 @@ Get all segments (duration, uri) for a specific media sequence
 
 | Param | Type | Description |
 | --- | --- | --- |
+| seqIdx | <code>number</code> | media sequence index (first is 0) |
+
+<a name="HLSVod+getLiveMediaSequenceAudioSegments"></a>
+
+### hlsVod.getLiveMediaSequenceAudioSegments(audioGroupId, seqIdx)
+Get all audio segments (duration, uri) for a specific media sequence
+
+**Kind**: instance method of [<code>HLSVod</code>](#HLSVod)  
+
+| Param | Type | Description |
+| --- | --- | --- |
+| audioGroupId | <code>string</code> | audio group Id |
 | seqIdx | <code>number</code> | media sequence index (first is 0) |
 
 <a name="HLSVod+getBandwidths"></a>
