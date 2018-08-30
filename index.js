@@ -74,13 +74,13 @@ class HLSVod {
             let audioGroupId = streamItem.attributes.attributes['audio'];
             if (!this.audioSegments[audioGroupId]) {
               this.audioSegments[audioGroupId] = [];
-              debug(`Lookup media item for '${audioGroupId}'`);
-              let audioGroupItem = m3u.items.MediaItem.find(item => {
-                return (item.attributes.attributes.type === 'AUDIO' && item.attributes.attributes['group-id'] === audioGroupId);
-              });
-              let audioManifestUrl = url.resolve(baseUrl, audioGroupItem.attributes.attributes.uri);
-              audioManifestPromises.push(this._loadAudioManifest(audioManifestUrl, audioGroupId, _injectAudioManifest));
             }
+            debug(`Lookup media item for '${audioGroupId}'`);
+            let audioGroupItem = m3u.items.MediaItem.find(item => {
+              return (item.attributes.attributes.type === 'AUDIO' && item.attributes.attributes['group-id'] === audioGroupId);
+            });
+            let audioManifestUrl = url.resolve(baseUrl, audioGroupItem.attributes.attributes.uri);
+            audioManifestPromises.push(this._loadAudioManifest(audioManifestUrl, audioGroupId, _injectAudioManifest));
           }
         }
         Promise.all(mediaManifestPromises.concat(audioManifestPromises))
@@ -111,10 +111,10 @@ class HLSVod {
    * 
    * @param {HLSVod} previousVod - the previous VOD to concatenate to
    */
-  loadAfter(previousVod, _injectMasterManifest, _injectMediaManifest) {
+  loadAfter(previousVod, _injectMasterManifest, _injectMediaManifest, _injectAudioManifest) {
     this.previousVod = previousVod;
     this._loadPrevious();
-    return this.load(_injectMasterManifest, _injectMediaManifest);
+    return this.load(_injectMasterManifest, _injectMediaManifest, _injectAudioManifest);
   }
 
   /**
@@ -237,6 +237,22 @@ class HLSVod {
         this.timeOffset = lastSeg[2] + lastSeg[0]*1000;
       }
       this.segments[bw].push([-1, '']);
+    }
+
+    const audioGroups = this.previousVod.getAudioGroups();
+    if (audioGroups.length > 0) {
+      for (let i = 0; i < audioGroups.length; i++) {
+        const audioGroupId = audioGroups[i];
+        const lastMediaAudioSequence = this.previousVod.getLiveMediaSequenceAudioSegments(audioGroupId, previousVodSeqCount - 1);
+        if (!this.audioSegments[audioGroupId]) {
+          this.audioSegments[audioGroupId] = [];
+        }
+        for (let idx = 1; idx < lastMediaAudioSequence.length; idx++) {
+          let q = lastMediaAudioSequence[idx];
+          this.audioSegments[audioGroupId].push(q);
+        }
+        this.audioSegments[audioGroupId].push([-1, '']);
+      }
     }
   }
 
@@ -456,7 +472,7 @@ class HLSVod {
       debug(`Audio manifest URI: ${audioManifestUri}`);
 
       parser.on('m3u', m3u => {
-        if (this.audioSegments[groupId].length === 0) {
+        if (this.audioSegments[groupId]) {
           
           for (let i = 0; i < m3u.items.PlaylistItem.length; i++) {
             const playlistItem = m3u.items.PlaylistItem[i];
@@ -473,9 +489,6 @@ class HLSVod {
               segmentUri = url.resolve(baseUrl, playlistItem.properties.uri);
             }
             let q = [ playlistItem.properties.duration, segmentUri ];
-            if (this.timeOffset != null) {
-              q.push(this.timeOffset + timelinePosition);
-            }
             this.audioSegments[groupId].push(q);
           }
         }
