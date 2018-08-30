@@ -18,6 +18,7 @@ class HLSVod {
     this.mediaSequences = [];
     this.SEQUENCE_DURATION = 60;
     this.targetDuration = {};
+    this.targetAudioDuration = {};
     this.previousVod = null;
     this.usageProfile = [];
     this.segmentsInitiated = {};
@@ -182,6 +183,41 @@ class HLSVod {
     let previousSegment = null;
     for (let i = 0; i < this.mediaSequences[seqIdx].segments[bw].length; i++) {
       const v = this.mediaSequences[seqIdx].segments[bw][i];
+      if (v) {
+        if (previousSegment != null) {
+          if (previousSegment[0] === -1 && v[2]) {
+            const d = new Date(v[2]);
+            m3u8 += "#EXT-X-PROGRAM-DATE-TIME:" + d.toISOString() + "\n";
+          }
+        }
+        if (v[0] !== -1) {
+          m3u8 += "#EXTINF:" + v[0] + "\n";
+          m3u8 += v[1] + "\n";
+        } else {
+          m3u8 += "#EXT-X-DISCONTINUITY\n";
+        }
+        previousSegment = v;
+      }
+    }
+
+    return m3u8;
+  }
+
+  getLiveMediaAudioSequences(offset, audioGroupId, seqIdx, discOffset) {
+    debug(`Get live audio media sequence [${seqIdx}] for audioGroupId=${audioGroupId}`);
+    let m3u8 = "#EXTM3U\n";
+    m3u8 += "#EXT-X-VERSION:3\n";
+    m3u8 += "#EXT-X-TARGETDURATION:" + this.targetAudioDuration[audioGroupId] + "\n";
+    m3u8 += "#EXT-X-MEDIA-SEQUENCE:" + (offset + seqIdx) + "\n";
+    let discInOffset = discOffset;
+    if (discInOffset == null) {
+      discInOffset = 0;
+    }
+    m3u8 += "#EXT-X-DISCONTINUITY-SEQUENCE:" + (discInOffset + this.discontinuities[seqIdx]) + "\n";
+
+    let previousSegment = null;
+    for (let i = 0; i < this.mediaSequences[seqIdx].audioSegments[audioGroupId].length; i++) {
+      const v = this.mediaSequences[seqIdx].audioSegments[audioGroupId][i];
       if (v) {
         if (previousSegment != null) {
           if (previousSegment[0] === -1 && v[2]) {
@@ -491,6 +527,7 @@ class HLSVod {
             let q = [ playlistItem.properties.duration, segmentUri ];
             this.audioSegments[groupId].push(q);
           }
+          this.targetAudioDuration[groupId] = Math.ceil(this.audioSegments[groupId].map(el => el ? el[0] : 0).reduce((max, cur) => Math.max(max, cur), -Infinity));
         }
         resolve();
       });

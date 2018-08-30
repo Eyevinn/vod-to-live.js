@@ -640,10 +640,24 @@ describe("HLSVod with separate audio variants", () => {
       expect(seqSegments2['354000'][13][1]).toEqual('http://mock.com/1woxvooiidb(11186147_ISMUSP)-video=241929-1.ts');
       const seqAudioSegments1 = mockVod.getLiveMediaSequenceAudioSegments('audio-aacl-96', 0);
       const seqAudioSegments2 = mockVod2.getLiveMediaSequenceAudioSegments('audio-aacl-96', 0);
-      console.log(seqAudioSegments2);
       expect(seqAudioSegments1[0][1]).toEqual('http://mock.com/1woxvooiidb(11186147_ISMUSP)-audio=96000-1.aac');
       expect(seqAudioSegments2[12][0]).toBe(-1);
       expect(seqAudioSegments2[13][1]).toEqual('http://mock.com/1woxvooiidb(11186147_ISMUSP)-audio=96000-1.aac');
+      done();
+    });
+  });
+
+  it("can return an audio variant manifest", done => {
+    const now = Date.now();
+    mockVod = new HLSVod('http://mock.com/mock.m3u8', [], now);
+    mockVod2 = new HLSVod('http://mock.com/mock2.m3u8', []);
+    mockVod.load(mockMasterManifest, mockMediaManifest, mockAudioManifest)
+    .then(() => {
+      return mockVod2.loadAfter(mockVod, mockMasterManifest, mockMediaManifest, mockAudioManifest);
+    }).then(() => {
+      let m3u8 = mockVod2.getLiveMediaAudioSequences(0, 'audio-aacl-96', 0);
+      let m = m3u8.match('#EXT-X-DISCONTINUITY\n');
+      expect(m).not.toBeNull();
       done();
     });
   });
