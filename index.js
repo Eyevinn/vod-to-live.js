@@ -175,11 +175,17 @@ class HLSVod {
       discInOffset = 0;
     }
     m3u8 += "#EXT-X-DISCONTINUITY-SEQUENCE:" + (discInOffset + this.discontinuities[seqIdx]) + "\n";
+    
     if (!this.mediaSequences[seqIdx]) {
-      debug('No segments in media sequence!');
-      debug(this.mediaSequences[seqIdx]);
-      debug(this.segments[bw]);
+      debug('No sequence idx: ' + seqIdx);
+      return m3u8;
     }
+    if (!this.mediaSequences[seqIdx].segments[bw]) {
+      debug('No segments in media sequence idx: ' + seqIdx + ` bw: ` + bw);
+      debug(this.mediaSequences[seqIdx]);
+      return m3u8;
+    }
+    
     let previousSegment = null;
     for (let i = 0; i < this.mediaSequences[seqIdx].segments[bw].length; i++) {
       const v = this.mediaSequences[seqIdx].segments[bw][i];
@@ -194,7 +200,9 @@ class HLSVod {
           m3u8 += "#EXTINF:" + v[0] + "\n";
           m3u8 += v[1] + "\n";
         } else {
-          m3u8 += "#EXT-X-DISCONTINUITY\n";
+          if (i != 0){
+            m3u8 += "#EXT-X-DISCONTINUITY\n";
+          }
         }
         previousSegment = v;
       }
@@ -229,7 +237,9 @@ class HLSVod {
           m3u8 += "#EXTINF:" + v[0] + "\n";
           m3u8 += v[1] + "\n";
         } else {
-          m3u8 += "#EXT-X-DISCONTINUITY\n";
+          if (i != 0){
+            m3u8 += "#EXT-X-DISCONTINUITY\n";
+          }
         }
         previousSegment = v;
       }
@@ -269,7 +279,7 @@ class HLSVod {
         this.segments[bw].push(q);
       }
       const lastSeg = this.segments[bw][this.segments[bw].length - 1];
-      if (lastSeg[2]) {
+      if (lastSeg && lastSeg[2]) {
         this.timeOffset = lastSeg[2] + lastSeg[0]*1000;
       }
       this.segments[bw].push([-1, '']);
@@ -303,7 +313,7 @@ class HLSVod {
       const audioGroupId = this._getFirstAudioGroupWithSegments();
       let audioSequence = {};
 
-      while (segIdx != this.segments[bw].length) {
+      while (this.segments[bw][segIdx] && segIdx != this.segments[bw].length) {
         if (this.segments[bw][segIdx][0] !== -1) {
           duration += this.segments[bw][segIdx][0];
         }
@@ -354,16 +364,15 @@ class HLSVod {
         reject('Failed to init media sequences');
       } else {
         let discSeqNo = 0;
-        this.discontinuities[0] = discSeqNo;
         for (let seqNo = 0; seqNo < this.mediaSequences.length; seqNo++) {
           const mseq = this.mediaSequences[seqNo];
           const bwIdx = Object.keys(mseq.segments)[0];
-          this.discontinuities[seqNo] = discSeqNo;
-          if (mseq.segments[bwIdx][0][0] === -1) {
+          if (mseq.segments[bwIdx] && mseq.segments[bwIdx][0] && mseq.segments[bwIdx][0][0] === -1) {
             debug(`Discontinuity in first segment of media seq ${seqNo}`);
             discSeqNo++;
             debug(`Increasing discont sequence ${discSeqNo}`);
           }
+          this.discontinuities[seqNo] = discSeqNo;
         }
         resolve();
       }

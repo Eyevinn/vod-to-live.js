@@ -400,7 +400,7 @@ describe("HLSVod with timeline", () => {
       m = m3u8.match('#EXT-X-DISCONTINUITY-SEQUENCE:0\n');
       expect(m).not.toBeNull();
       m3u8 = mockVod2.getLiveMediaSequences(0, '2497000', 5);
-      m = m3u8.match('#EXT-X-DISCONTINUITY-SEQUENCE:0\n');
+      m = m3u8.match('#EXT-X-DISCONTINUITY-SEQUENCE:1\n');
       expect(m).not.toBeNull();
       m3u8 = mockVod2.getLiveMediaSequences(0, '2497000', 6);
       m = m3u8.match('#EXT-X-DISCONTINUITY-SEQUENCE:1\n');      
@@ -441,7 +441,7 @@ describe("HLSVod with timeline", () => {
       m = m3u8.match('#EXT-X-DISCONTINUITY-SEQUENCE:0\n');
       expect(m).not.toBeNull();
       m3u8 = mockVod2.getLiveMediaSequences(0, '2497000', 5);
-      m = m3u8.match('#EXT-X-DISCONTINUITY-SEQUENCE:0\n');
+      m = m3u8.match('#EXT-X-DISCONTINUITY-SEQUENCE:1\n');
       expect(m).not.toBeNull();
       m3u8 = mockVod2.getLiveMediaSequences(0, '2497000', 6);
       m = m3u8.match('#EXT-X-DISCONTINUITY-SEQUENCE:1\n');
