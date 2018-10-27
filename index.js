@@ -95,11 +95,15 @@ class HLSVod {
       });
 
       if (!_injectMasterManifest) {
-        request.get(this.masterManifestUri)
-        .on('error', err => {
-          reject(err);
-        })
-        .pipe(parser);
+        try {
+          request.get(this.masterManifestUri)
+          .on('error', err => {
+            reject(err);
+          })
+          .pipe(parser);
+        } catch(exc) {
+          reject(exc);
+        }
       } else {
         _injectMasterManifest().pipe(parser);
       }
@@ -504,8 +508,15 @@ class HLSVod {
       });
 
       if (!_injectMediaManifest) {
-        request.get(mediaManifestUri)
-        .pipe(parser);
+        try {
+          request.get(mediaManifestUri)
+          .on('error', err => {
+            reject(err);
+          })
+          .pipe(parser);
+        } catch(exc) {
+          reject(exc);
+        }
       } else {
         _injectMediaManifest(bandwidth).pipe(parser);
       }
@@ -544,8 +555,15 @@ class HLSVod {
       });
 
       if (!_injectAudioManifest) {
-        request.get(audioManifestUri)
-        .pipe(parser);
+        try {
+          request.get(audioManifestUri)
+          .on('error', err => {
+            reject(err);
+          })
+          .pipe(parser);
+        } catch(exc) {
+          reject(exc);
+        }
       } else {
         _injectAudioManifest(groupId).pipe(parser);
       }
