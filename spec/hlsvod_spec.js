@@ -18,7 +18,7 @@ describe("HLSVod standalone", () => {
     mockVod = new HLSVod('http://mock.com/mock.m3u8');
     mockVod.load(mockMasterManifest, mockMediaManifest)
     .then(() => {
-      expect(mockVod.getLiveMediaSequencesCount()).toBe(289);
+      expect(mockVod.getLiveMediaSequencesCount()).toBe(290);
       done();
     });
   });
@@ -64,10 +64,10 @@ describe("HLSVod standalone", () => {
     .then(() => {
       const lastMediaSeq = mockVod.getLiveMediaSequencesCount() - 1;
       const seqSegments = mockVod.getLiveMediaSequenceSegments(lastMediaSeq);
-      expect(seqSegments['2497000'][0][1]).toEqual("https://tv4play-i.akamaihd.net/i/mp4root/2018-01-26/pid200032972(3953564_,T3MP445,T3MP435,T3MP425,T3MP415,T3MP48,T3MP43,T3MP4130,).mp4.csmil/segment289_2_av.ts");
-      expect(seqSegments['1497000'][0][1]).toEqual("https://tv4play-i.akamaihd.net/i/mp4root/2018-01-26/pid200032972(3953564_,T3MP445,T3MP435,T3MP425,T3MP415,T3MP48,T3MP43,T3MP4130,).mp4.csmil/segment289_3_av.ts");
-      expect(seqSegments['2497000'][5][1]).toEqual("https://tv4play-i.akamaihd.net/i/mp4root/2018-01-26/pid200032972(3953564_,T3MP445,T3MP435,T3MP425,T3MP415,T3MP48,T3MP43,T3MP4130,).mp4.csmil/segment294_2_av.ts");
-      expect(seqSegments['1497000'][5][1]).toEqual("https://tv4play-i.akamaihd.net/i/mp4root/2018-01-26/pid200032972(3953564_,T3MP445,T3MP435,T3MP425,T3MP415,T3MP48,T3MP43,T3MP4130,).mp4.csmil/segment294_3_av.ts");
+      expect(seqSegments['2497000'][0][1]).toEqual("https://tv4play-i.akamaihd.net/i/mp4root/2018-01-26/pid200032972(3953564_,T3MP445,T3MP435,T3MP425,T3MP415,T3MP48,T3MP43,T3MP4130,).mp4.csmil/segment290_2_av.ts");
+      expect(seqSegments['1497000'][0][1]).toEqual("https://tv4play-i.akamaihd.net/i/mp4root/2018-01-26/pid200032972(3953564_,T3MP445,T3MP435,T3MP425,T3MP415,T3MP48,T3MP43,T3MP4130,).mp4.csmil/segment290_3_av.ts");
+      expect(seqSegments['2497000'][5][1]).toEqual("https://tv4play-i.akamaihd.net/i/mp4root/2018-01-26/pid200032972(3953564_,T3MP445,T3MP435,T3MP425,T3MP415,T3MP48,T3MP43,T3MP4130,).mp4.csmil/segment295_2_av.ts");
+      expect(seqSegments['1497000'][5][1]).toEqual("https://tv4play-i.akamaihd.net/i/mp4root/2018-01-26/pid200032972(3953564_,T3MP445,T3MP435,T3MP425,T3MP415,T3MP48,T3MP43,T3MP4130,).mp4.csmil/segment295_3_av.ts");
       done();
     });
   });
@@ -94,10 +94,10 @@ describe("HLSVod after another VOD", () => {
       return mockVod2.loadAfter(mockVod, mockMasterManifest, mockMediaManifest);
     }).then(() => {
       const seqSegments = mockVod2.getLiveMediaSequenceSegments(0);
-      expect(seqSegments['2497000'][0][1]).toEqual("https://tv4play-i.akamaihd.net/i/mp4root/2018-01-26/pid200032972(3953564_,T3MP445,T3MP435,T3MP425,T3MP415,T3MP48,T3MP43,T3MP4130,).mp4.csmil/segment290_2_av.ts");
-      expect(seqSegments['1497000'][0][1]).toEqual("https://tv4play-i.akamaihd.net/i/mp4root/2018-01-26/pid200032972(3953564_,T3MP445,T3MP435,T3MP425,T3MP415,T3MP48,T3MP43,T3MP4130,).mp4.csmil/segment290_3_av.ts");
-      expect(seqSegments['2497000'][5][0]).toBe(-1); // Discontinuity
-      expect(seqSegments['2497000'][6][1]).toEqual("https://tv4play-i.akamaihd.net/i/mp4root/2018-01-26/pid200032972(3953564_,T3MP445,T3MP435,T3MP425,T3MP415,T3MP48,T3MP43,T3MP4130,).mp4.csmil/segment1_2_av.ts");
+      expect(seqSegments['2497000'][0][1]).toEqual("https://tv4play-i.akamaihd.net/i/mp4root/2018-01-26/pid200032972(3953564_,T3MP445,T3MP435,T3MP425,T3MP415,T3MP48,T3MP43,T3MP4130,).mp4.csmil/segment291_2_av.ts");
+      expect(seqSegments['1497000'][0][1]).toEqual("https://tv4play-i.akamaihd.net/i/mp4root/2018-01-26/pid200032972(3953564_,T3MP445,T3MP435,T3MP425,T3MP415,T3MP48,T3MP43,T3MP4130,).mp4.csmil/segment291_3_av.ts");
+      expect(seqSegments['2497000'][[seqSegments['2497000'].length - 1 - 1]][0]).toBe(-1); // Discontinuity
+      expect(seqSegments['2497000'][[seqSegments['2497000'].length - 1]][1]).toEqual("https://tv4play-i.akamaihd.net/i/mp4root/2018-01-26/pid200032972(3953564_,T3MP445,T3MP435,T3MP425,T3MP415,T3MP48,T3MP43,T3MP4130,).mp4.csmil/segment1_2_av.ts");
       done();
     });
   });
@@ -163,28 +163,6 @@ describe("HLSVod with ad splicing", () => {
     .then(() => {
       let seqSegments = mockVod.getLiveMediaSequenceSegments(0);
       expect(seqSegments['2497000'][0][0]).not.toBe(-1);
-      done();
-    });
-  });
-
-  it("does not end with a discontinuity if ad is the last segment", done => {
-    const splices = [
-      { 
-        position: 2646.0,
-        segments: {
-          '2497000': [ [3, 'ad01.ts'], [3, 'ad02.ts'], [3, 'ad03.ts'], ],
-          '1497000': [ [3, 'ad01.ts'], [3, 'ad02.ts'], [3, 'ad03.ts'], ],
-        }
-      },
-    ];
-    let mockVod = new HLSVod('http://mock.com/mock.m3u8', splices);
-    mockVod.load(mockMasterManifest, mockMediaManifest)
-    .then(() => {
-      const count = mockVod.getLiveMediaSequencesCount();
-      let seqSegments = mockVod.getLiveMediaSequenceSegments(count - 1);
-      const seqLength = seqSegments['2497000'].length;
-      expect(seqSegments['2497000'][seqLength - 1][0]).not.toBe(-1);
-      expect(seqSegments['2497000'][seqLength - 1][1]).toEqual('ad03.ts');
       done();
     });
   });
@@ -317,7 +295,7 @@ describe("HLSVod with timeline", () => {
       seqSegments = mockVod.getLiveMediaSequenceSegments(1);
       expect(seqSegments['2497000'][5][2]).toEqual(now + 9*6*1000);
       seqSegments = mockVod.getLiveMediaSequenceSegments(count - 1);
-      expect(seqSegments['2497000'][5][2]).toEqual(now + 2637 * 1000);
+      expect(seqSegments['2497000'][5][2]).toEqual(now + 2646 * 1000);
       done();
     });
   });
@@ -331,8 +309,8 @@ describe("HLSVod with timeline", () => {
       return mockVod2.loadAfter(mockVod, mockMasterManifest, mockMediaManifest);
     }).then(() => {
       const seqSegments = mockVod2.getLiveMediaSequenceSegments(0);
-      expect(seqSegments['2497000'][4][2]).toEqual(now + 2637 * 1000);
-      expect(seqSegments['2497000'][6][2]).toEqual(now + 2637*1000 +  9*1000);
+      expect(seqSegments['2497000'][4][2]).toEqual(now + 2646 * 1000);
+      expect(seqSegments['2497000'][6][2]).toEqual(now + 2646*1000 + 6266);
       done();
     });
   });
@@ -362,8 +340,9 @@ describe("HLSVod with timeline", () => {
       return mockVod2.loadAfter(mockVod, mockMasterManifest, mockMediaManifest);
     }).then(() => {
       const seqSegments = mockVod2.getLiveMediaSequenceSegments(0);
-      expect(seqSegments['2497000'][4][2]).toEqual(now + 2637 * 1000);
-      expect(seqSegments['2497000'][6][2]).toEqual(now + 2637*1000 + 9*1000);
+      console.log(seqSegments['2497000']);
+      expect(seqSegments['2497000'][4][2]).toEqual(now + 2646 * 1000);
+      expect(seqSegments['2497000'][6][2]).toEqual(now + 2646*1000 + 6266);
       done();
     });
   });
@@ -625,6 +604,19 @@ describe("HLSVod with separate audio variants", () => {
     });
   });
 
+  it("returns correct first and last media sequence", done => {
+    mockVod = new HLSVod('http://mock.com/mock.m3u8');
+    mockVod.load(mockMasterManifest, mockMediaManifest, mockAudioManifest)
+    .then(() => {
+      const count = mockVod.getLiveMediaSequencesCount();
+      let seqVideoSegments = mockVod.getLiveMediaSequenceSegments(0);
+      expect(seqVideoSegments['354000'][0][1]).toEqual('http://mock.com/1woxvooiidb(11186147_ISMUSP)-video=241929-1.ts');
+      seqVideoSegments = mockVod.getLiveMediaSequenceSegments(count - 1);
+      expect(seqVideoSegments['354000'][seqVideoSegments['354000'].length - 1][1]).toEqual('http://mock.com/1woxvooiidb(11186147_ISMUSP)-video=241929-26.ts');
+      done();
+    });
+  });
+
   it("can handle vod after another vod", done => {
     const now = Date.now();
     mockVod = new HLSVod('http://mock.com/mock.m3u8', [], now);
@@ -636,13 +628,13 @@ describe("HLSVod with separate audio variants", () => {
       const seqSegments1 = mockVod.getLiveMediaSequenceSegments(0);
       const seqSegments2 = mockVod2.getLiveMediaSequenceSegments(0);
       expect(seqSegments1['354000'][0][1]).toEqual('http://mock.com/1woxvooiidb(11186147_ISMUSP)-video=241929-1.ts');
-      expect(seqSegments2['354000'][12][0]).toBe(-1);
-      expect(seqSegments2['354000'][13][1]).toEqual('http://mock.com/1woxvooiidb(11186147_ISMUSP)-video=241929-1.ts');
+      expect(seqSegments2['354000'][seqSegments2['354000'].length - 1 - 1][0]).toBe(-1);
+      expect(seqSegments2['354000'][seqSegments2['354000'].length - 1][1]).toEqual('http://mock.com/1woxvooiidb(11186147_ISMUSP)-video=241929-1.ts');
       const seqAudioSegments1 = mockVod.getLiveMediaSequenceAudioSegments('audio-aacl-96', 0);
       const seqAudioSegments2 = mockVod2.getLiveMediaSequenceAudioSegments('audio-aacl-96', 0);
       expect(seqAudioSegments1[0][1]).toEqual('http://mock.com/1woxvooiidb(11186147_ISMUSP)-audio=96000-1.aac');
-      expect(seqAudioSegments2[12][0]).toBe(-1);
-      expect(seqAudioSegments2[13][1]).toEqual('http://mock.com/1woxvooiidb(11186147_ISMUSP)-audio=96000-1.aac');
+      expect(seqAudioSegments2[[seqAudioSegments2.length - 1 - 1]][0]).toBe(-1);
+      expect(seqAudioSegments2[[seqAudioSegments2.length - 1]][1]).toEqual('http://mock.com/1woxvooiidb(11186147_ISMUSP)-audio=96000-1.aac');
       done();
     });
   });

@@ -317,6 +317,7 @@ class HLSVod {
         if (this.segments[bw][segIdx][0] !== -1) {
           duration += this.segments[bw][segIdx][0];
         }
+        //console.log(`${duration} < ${this.SEQUENCE_DURATION}`);
         if (duration < this.SEQUENCE_DURATION) {
           const bandwidths = Object.keys(this.segments);
           for (let i = 0; i < bandwidths.length; i++) {
@@ -350,7 +351,8 @@ class HLSVod {
           segIdx = segOffset;
         }
       }
-      if (this.mediaSequences.length === 0 && duration < this.SEQUENCE_DURATION) {
+      if (duration < this.SEQUENCE_DURATION) {
+        // We are out of segments but have not reached the full duration of a sequence
         duration = 0;
         this.mediaSequences.push({
           segments: sequence,
