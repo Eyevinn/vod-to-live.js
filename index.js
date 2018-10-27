@@ -80,7 +80,14 @@ class HLSVod {
             let audioGroupItem = m3u.items.MediaItem.find(item => {
               return (item.attributes.attributes.type === 'AUDIO' && item.attributes.attributes['group-id'] === audioGroupId);
             });
-            let audioManifestUrl = url.resolve(baseUrl, audioGroupItem.attributes.attributes.uri);
+            let audioUri = audioGroupItem.attributes.attributes.uri;
+            if (!audioUri) {
+              let audioVariant = m3u.items.StreamItem.find(item => {
+                return (!item.attributes.attributes.resolution && item.attributes.attributes['audio'] === audioGroupId);
+              });
+              audioUri = audioVariant.properties.uri;
+            }
+            let audioManifestUrl = url.resolve(baseUrl, audioUri);
             audioManifestPromises.push(this._loadAudioManifest(audioManifestUrl, audioGroupId, _injectAudioManifest));
           }
         }

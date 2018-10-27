@@ -340,7 +340,6 @@ describe("HLSVod with timeline", () => {
       return mockVod2.loadAfter(mockVod, mockMasterManifest, mockMediaManifest);
     }).then(() => {
       const seqSegments = mockVod2.getLiveMediaSequenceSegments(0);
-      console.log(seqSegments['2497000']);
       expect(seqSegments['2497000'][4][2]).toEqual(now + 2646 * 1000);
       expect(seqSegments['2497000'][6][2]).toEqual(now + 2646*1000 + 6266);
       done();
@@ -564,6 +563,9 @@ describe("HLSVod with separate audio variants", () => {
     mockMasterManifest = function() {
       return fs.createReadStream('testvectors/hls4/master.m3u8');
     };
+    mockMasterManifestNoUri = function() {
+      return fs.createReadStream('testvectors/hls4/master-nouri.m3u8');
+    };
     mockMediaManifest = function(bandwidth) {
       const fname = {
         '354000': 'video-241929.m3u8',
@@ -588,6 +590,15 @@ describe("HLSVod with separate audio variants", () => {
     .then(() => {
       expect(mockVod.getBandwidths().length).toBe(5);
       expect(mockVod.getBandwidths()).toEqual(['354000', '819000', '1538000', '2485000', '3396000']);
+      done();
+    });
+  });
+
+  it("handles master manifest with audiogroup without uri attribute", done => {
+    mockVod = new HLSVod('http://mock.com/mock.m3u8');
+    mockVod.load(mockMasterManifestNoUri, mockMediaManifest, mockAudioManifest)
+    .then(() => {
+      expect(mockVod.getAudioGroups().length).toBe(1);
       done();
     });
   });
