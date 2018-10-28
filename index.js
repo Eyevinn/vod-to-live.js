@@ -124,9 +124,17 @@ class HLSVod {
    * @param {HLSVod} previousVod - the previous VOD to concatenate to
    */
   loadAfter(previousVod, _injectMasterManifest, _injectMediaManifest, _injectAudioManifest) {
-    this.previousVod = previousVod;
-    this._loadPrevious();
-    return this.load(_injectMasterManifest, _injectMediaManifest, _injectAudioManifest);
+    return new Promise((resolve, reject) => {
+      this.previousVod = previousVod;
+      try {
+        this._loadPrevious();
+        this.load(_injectMasterManifest, _injectMediaManifest, _injectAudioManifest)
+        .then(resolve)
+        .catch(reject);
+      } catch (exc) {
+        reject(exc);
+      }  
+    });
   }
 
   /**
