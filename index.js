@@ -466,6 +466,9 @@ class HLSVod {
             } else {
               segmentUri = url.resolve(baseUrl, playlistItem.properties.uri);
             }
+            if (playlistItem.properties.discontinuity) {
+              this.segments[bw].push([-1]);
+            }
             let diff = 0;
             if (nextSplicePosition != null && position + playlistItem.properties.duration > nextSplicePosition) {
               debug(`Inserting splice at ${bw}:${position} (${i})`);
@@ -560,6 +563,9 @@ class HLSVod {
               segmentUri = playlistItem.properties.uri;
             } else {
               segmentUri = url.resolve(baseUrl, playlistItem.properties.uri);
+            }
+            if (playlistItem.properties.discontinuity) {
+              this.audioSegments[groupId].push([-1]);
             }
             let q = [ playlistItem.properties.duration, segmentUri ];
             this.audioSegments[groupId].push(q);

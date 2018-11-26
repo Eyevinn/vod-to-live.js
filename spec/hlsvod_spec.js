@@ -665,3 +665,41 @@ describe("HLSVod with separate audio variants", () => {
     });
   });
 });
+
+describe("HLSVod with discontinuites in the source", () => {
+  let mockMasterManifest;
+  let mockMediaManifest;
+
+  beforeEach(() => {
+    mockMasterManifest = function() {
+      return fs.createReadStream('testvectors/hls5/master.m3u8');
+    };
+    mockMediaManifest = function(bandwidth) {
+      const fname = {
+        '401000': '1.m3u8'
+      };
+      return fs.createReadStream('testvectors/hls5/' + fname[bandwidth]);
+    };
+    mockAudioManifest = function(groupId) {
+      const fname = {
+        'aac': '7.m3u8'
+      };
+      return fs.createReadStream('testvectors/hls5/' + fname[groupId]);
+    }
+  });
+
+  it("maintain discontinuities", done => {
+    const now = Date.now();
+    mockVod = new HLSVod('http://mock.com/mock.m3u8', [], now);
+    mockVod.load(mockMasterManifest, mockMediaManifest, mockAudioManifest)
+    .then(() => {
+      const seqSegments1 = mockVod.getLiveMediaSequenceSegments(0);
+      expect(seqSegments1['401000'][2][0]).toBe(-1);
+
+      let m3u8 = mockVod.getLiveMediaAudioSequences(0, 'aac', 0);
+      let m = m3u8.match('#EXT-X-DISCONTINUITY\n');
+      expect(m).not.toBeNull();
+      done();
+    })
+  });
+});
