@@ -216,7 +216,7 @@ class HLSVod {
           }
         }
         if (v[0] !== -1) {
-          m3u8 += "#EXTINF:" + v[0] + "\n";
+          m3u8 += "#EXTINF:" + v[0].toFixed(3) + ",\n";
           m3u8 += v[1] + "\n";
         } else {
           if (i != 0){
