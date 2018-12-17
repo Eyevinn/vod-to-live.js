@@ -746,7 +746,6 @@ describe("HLSVod with discontinuites in the source", () => {
       m3u8 = mockVod2.getLiveMediaSequences(c, '401000', 17, 1);
       m = m3u8.match('#EXT-X-DISCONTINUITY-SEQUENCE:3');
       expect(m).not.toBeNull();
-      console.log(m3u8);
       done();
     });
   });
