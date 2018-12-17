@@ -725,6 +725,8 @@ describe("HLSVod with discontinuites in the source", () => {
   it("increments discontinuity sequence correctly", done => {
     mockVod = new HLSVod('http://mock.com/mock.m3u8');
     mockVod2 = new HLSVod('http://mock.com/mock2.m3u8');
+    mockVod3 = new HLSVod('http://mock.com/mock3.m3u8');
+    let i = 0;
     mockVod.load(mockMasterManifest, mockMediaManifest, mockAudioManifest)
     .then(() => {
       return mockVod2.loadAfter(mockVod, mockMasterManifest2, mockMediaManifest2, mockAudioManifest2);
@@ -733,18 +735,31 @@ describe("HLSVod with discontinuites in the source", () => {
       let m3u8 = mockVod.getLiveMediaSequences(0, '401000', 1, 0);
       let m = m3u8.match('#EXT-X-DISCONTINUITY-SEQUENCE:0');
       expect(m).not.toBeNull();
+      let l = mockVod.getLastDiscontinuity();
       m3u8 = mockVod.getLiveMediaSequences(0, '401000', 2, 0);
       m = m3u8.match('#EXT-X-DISCONTINUITY-SEQUENCE:1');
       expect(m).not.toBeNull();
       let c = mockVod.getLiveMediaSequencesCount();
-      m3u8 = mockVod2.getLiveMediaSequences(c, '401000', 13, 1);
+      m3u8 = mockVod2.getLiveMediaSequences(c, '401000', 13, l);
       m = m3u8.match('#EXT-X-DISCONTINUITY-SEQUENCE:1');
       expect(m).not.toBeNull();
-      m3u8 = mockVod2.getLiveMediaSequences(c, '401000', 14, 1);
+      m3u8 = mockVod2.getLiveMediaSequences(c, '401000', 14, l);
       m = m3u8.match('#EXT-X-DISCONTINUITY-SEQUENCE:2');
       expect(m).not.toBeNull();
-      m3u8 = mockVod2.getLiveMediaSequences(c, '401000', 17, 1);
+      m3u8 = mockVod2.getLiveMediaSequences(c, '401000', 17, l);
       m = m3u8.match('#EXT-X-DISCONTINUITY-SEQUENCE:3');
+      expect(m).not.toBeNull();
+      expect(mockVod2.getLastDiscontinuity()).toEqual(4);
+      i = c + mockVod2.getLiveMediaSequencesCount();
+      return mockVod3.loadAfter(mockVod2, mockMasterManifest, mockMediaManifest, mockAudioManifest);
+    })
+    .then(() => {
+      let j = mockVod2.getLastDiscontinuity();
+      let m3u8 = mockVod3.getLiveMediaSequences(i, '401000', 0, j);
+      m = m3u8.match('#EXT-X-DISCONTINUITY-SEQUENCE:4');
+      expect(m).not.toBeNull();
+      m3u8 = mockVod3.getLiveMediaSequences(i, '401000', 14, j);
+      m = m3u8.match('#EXT-X-DISCONTINUITY-SEQUENCE:5');
       expect(m).not.toBeNull();
       done();
     });
