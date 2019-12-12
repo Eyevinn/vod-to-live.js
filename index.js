@@ -103,7 +103,7 @@ class HLSVod {
 
       if (!_injectMasterManifest) {
         try {
-          request.get(this.masterManifestUri)
+          request({url: this.masterManifestUri, gzip: true })
           .on('error', err => {
             reject(err);
           })
@@ -527,7 +527,7 @@ class HLSVod {
 
       if (!_injectMediaManifest) {
         try {
-          request.get(mediaManifestUri)
+          request({url: mediaManifestUri, gzip: true })
           .on('error', err => {
             reject(err);
           })
@@ -577,7 +577,7 @@ class HLSVod {
 
       if (!_injectAudioManifest) {
         try {
-          request.get(audioManifestUri)
+          request({url :audioManifestUri, gzip: true })
           .on('error', err => {
             reject(err);
           })
