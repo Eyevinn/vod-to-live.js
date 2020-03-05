@@ -71,6 +71,36 @@ describe("HLSVod standalone", () => {
       done();
     });
   });
+
+  it("handles start time offset correctly when 0", done => {
+    mockVod = new HLSVod('http://mock.com/mock.m3u8', null, null, 0);
+    mockVod.load(mockMasterManifest, mockMediaManifest)
+    .then(() => {
+      const seqSegments = mockVod.getLiveMediaSequenceSegments(0);
+      expect(seqSegments['2497000'][0][1]).toEqual("https://tv4play-i.akamaihd.net/i/mp4root/2018-01-26/pid200032972(3953564_,T3MP445,T3MP435,T3MP425,T3MP415,T3MP48,T3MP43,T3MP4130,).mp4.csmil/segment1_2_av.ts");
+      done();
+    });
+  });
+
+  it("handles start time offset correctly when 27 seconds", done => {
+    mockVod = new HLSVod('http://mock.com/mock.m3u8', null, null, 27 * 1000);
+    mockVod.load(mockMasterManifest, mockMediaManifest)
+    .then(() => {
+      const seqSegments = mockVod.getLiveMediaSequenceSegments(0);
+      expect(seqSegments['2497000'][0][1]).toEqual("https://tv4play-i.akamaihd.net/i/mp4root/2018-01-26/pid200032972(3953564_,T3MP445,T3MP435,T3MP425,T3MP415,T3MP48,T3MP43,T3MP4130,).mp4.csmil/segment4_2_av.ts");
+      done();
+    });
+  });
+
+  it("handles start time offset correctly when it is longer than the total duration", done => {
+    mockVod = new HLSVod('http://mock.com/mock.m3u8', null, null, 2660 * 1000);
+    mockVod.load(mockMasterManifest, mockMediaManifest)
+    .then(() => {
+      const seqSegments = mockVod.getLiveMediaSequenceSegments(0);
+      expect(seqSegments).toEqual({});
+      done();
+    });
+  });
 });
 
 describe("HLSVod after another VOD", () => {

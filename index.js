@@ -10,8 +10,9 @@ class HLSVod {
    * @param {string} vodManifestUri - the uri to the master manifest of the VOD
    * @param {Object} splices - an array of ad splice objects
    * @param {number} timeOffset - time offset as unix timestamp ms
+   * @param {number} startTimeOffset - start time offset in N ms from start
    */
-  constructor(vodManifestUri, splices, timeOffset) {
+  constructor(vodManifestUri, splices, timeOffset, startTimeOffset) {
     this.masterManifestUri = vodManifestUri;
     this.segments = {};
     this.audioSegments = {};
@@ -24,6 +25,7 @@ class HLSVod {
     this.segmentsInitiated = {};
     this.splices = splices || [];
     this.timeOffset = timeOffset || null;
+    this.startTimeOffset = startTimeOffset || null;
     this.usageProfileMapping = null;
     this.usageProfileMappingRev = null;
     this.discontinuities = {};
@@ -515,6 +517,17 @@ class HLSVod {
               this.segments[bw].push(q);
               position += playlistItem.properties.duration;
               timelinePosition += playlistItem.properties.duration * 1000;
+            }
+          }
+          if (this.startTimeOffset != null) {
+            let remain = this.startTimeOffset;
+            while(remain > 0) {
+              const removed = this.segments[bw].shift();
+              if (!removed) {
+                remain = 0;
+              } else {
+                remain -= removed[0] * 1000;
+              }
             }
           }
           this.targetDuration[bw] = Math.ceil(this.segments[bw].map(el => el ? el[0] : 0).reduce((max, cur) => Math.max(max, cur), -Infinity));
