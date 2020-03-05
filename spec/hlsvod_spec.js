@@ -805,9 +805,7 @@ describe("HLSVod with ad tags", () => {
     mockMasterManifest = function() {
       return fs.createReadStream('testvectors/hls7/master.m3u8');
     };
-    // mockMasterManifestNoUri = function() {
-    //   return fs.createReadStream('testvectors/hls7/master-nouri.m3u8');
-    // };
+
     mockMediaManifest = function(bandwidth) {
       const fname = {
         '354000': 'video-241929.m3u8',
@@ -831,7 +829,6 @@ describe("HLSVod with ad tags", () => {
     mockVod.load(mockMasterManifest, mockMediaManifest, mockAudioManifest)
     .then(() => {
       let m3u8 = mockVod.getLiveMediaSequences(0, '241929', 0);
-      console.log('m3u8 is ', m3u8);
       m = m3u8.match('#EXT-X-CUE-OUT:DURATION=30');
       expect(m).not.toBeNull();
       done();
