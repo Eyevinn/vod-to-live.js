@@ -1,6 +1,6 @@
 {
   "name": "vod-to-live.js",
-  "version": "0.6.9",
+  "version": "0.7.0",
   "description": "HLS VOD to HLS Live",
   "repository": "https://github.com/Eyevinn/vod-to-live.js",
   "main": "index.js",
@@ -24,7 +24,7 @@
   },
   "devDependencies": {
     "jasmine": "^3.0.0",
-    "jsdoc-to-markdown": "^4.0.1",
+    "jsdoc-to-markdown": "^5.0.3",
     "nodemon": "^1.15.0"
   }
 }
