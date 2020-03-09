@@ -9,6 +9,7 @@ describe("HLSVod standalone", () => {
     mockMasterManifest = function() {
       return fs.createReadStream('testvectors/hls1/master.m3u8');
     };
+    
     mockMediaManifest = function(bandwidth) {
       return fs.createReadStream('testvectors/hls1/' + bandwidth + '.m3u8');
     };
@@ -790,6 +791,48 @@ describe("HLSVod with discontinuites in the source", () => {
       expect(m).not.toBeNull();
       m3u8 = mockVod3.getLiveMediaSequences(i, '401000', 14, j);
       m = m3u8.match('#EXT-X-DISCONTINUITY-SEQUENCE:5');
+      expect(m).not.toBeNull();
+      done();
+    });
+  });
+});
+  
+describe("HLSVod with ad tags", () => {
+  let mockMasterManifest;
+  let mockMediaManifest;
+
+  beforeEach(() => {
+    mockMasterManifest = function() {
+      return fs.createReadStream('testvectors/hls7/master.m3u8');
+    };
+    // mockMasterManifestNoUri = function() {
+    //   return fs.createReadStream('testvectors/hls7/master-nouri.m3u8');
+    // };
+    mockMediaManifest = function(bandwidth) {
+      const fname = {
+        '354000': 'video-241929.m3u8',
+        '819000': 'video-680761.m3u8',
+        '1538000': 'video-1358751.m3u8',
+        '2485000': 'video-2252188.m3u8',
+        '3396000': 'video-3112126.m3u8'
+      };
+      return fs.createReadStream('testvectors/hls7/' + fname[bandwidth]);
+    };
+    mockAudioManifest = function(groupId) {
+      const fname = {
+        'audio-aacl-96': 'audio-96000.m3u8'
+      };
+      return fs.createReadStream('testvectors/hls7/' + fname[groupId]);
+    }
+  });
+
+  it("includes ad tags", done => {
+    mockVod = new HLSVod('http://mock.com/mock.m3u8');
+    mockVod.load(mockMasterManifest, mockMediaManifest, mockAudioManifest)
+    .then(() => {
+      let m3u8 = mockVod.getLiveMediaSequences(0, '241929', 0);
+      console.log('m3u8 is ', m3u8);
+      m = m3u8.match('#EXT-X-CUE-OUT:DURATION=30');
       expect(m).not.toBeNull();
       done();
     });
