@@ -571,7 +571,7 @@ class HLSVod {
               if (!removed) {
                 remain = 0;
               } else {
-                remain -= removed[0] * 1000;
+                remain -= removed.duration * 1000;
               }
             }
           }          
