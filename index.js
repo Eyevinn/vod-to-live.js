@@ -1,4 +1,4 @@
-const m3u8 = require('m3u8');
+const m3u8 = require('@eyevinn/m3u8');
 const request = require('request');
 const url = require('url');
 const debug = require('debug')('vod-to-live');
@@ -65,6 +65,7 @@ class HLSVod {
         for (let i = 0; i < m3u.items.StreamItem.length; i++) {
           const streamItem = m3u.items.StreamItem[i];
           let mediaManifestUrl = url.resolve(baseUrl, streamItem.properties.uri);
+          
           if (streamItem.attributes.attributes['resolution']) {
             this.usageProfile.push({
               bw: streamItem.attributes.attributes['bandwidth'],
@@ -210,21 +211,31 @@ class HLSVod {
     let previousSegment = null;
     for (let i = 0; i < this.mediaSequences[seqIdx].segments[bw].length; i++) {
       const v = this.mediaSequences[seqIdx].segments[bw][i];
+      
       if (v) {
         if (previousSegment != null) {
-          if (previousSegment[0] === -1 && v[2]) {
-            const d = new Date(v[2]);
+          if (previousSegment.discontinuity && v.timelinePosition) {
+            const d = new Date(v.timelinePosition);
             m3u8 += "#EXT-X-PROGRAM-DATE-TIME:" + d.toISOString() + "\n";
           }
         }
-        if (v[0] !== -1) {
-          m3u8 += "#EXTINF:" + v[0].toFixed(3) + ",\n";
-          m3u8 += v[1] + "\n";
+        
+        if (!v.discontinuity) {
+          if(v.cue) {
+            if(v.cue.type === 'OUT') {
+              m3u8 += "#EXT-X-CUE-OUT:DURATION=" + v.cue.duration + "\n";
+            } else if(v.cue.type === 'IN') {
+              m3u8 += "#EXT-X-CUE-IN" + "\n";
+            }
+          }
+          m3u8 += "#EXTINF:" + v.duration.toFixed(3) + ",\n";
+          m3u8 += v.uri + "\n";
         } else {
           if (i != 0){
             m3u8 += "#EXT-X-DISCONTINUITY\n";
           }
         }
+
         previousSegment = v;
       }
     }
@@ -249,14 +260,21 @@ class HLSVod {
       const v = this.mediaSequences[seqIdx].audioSegments[audioGroupId][i];
       if (v) {
         if (previousSegment != null) {
-          if (previousSegment[0] === -1 && v[2]) {
-            const d = new Date(v[2]);
+          if (previousSegment.discontinuity && v.timelinePosition) {
+            const d = new Date(v.timelinePosition);
             m3u8 += "#EXT-X-PROGRAM-DATE-TIME:" + d.toISOString() + "\n";
           }
         }
-        if (v[0] !== -1) {
-          m3u8 += "#EXTINF:" + v[0].toFixed(3) + ",\n";
-          m3u8 += v[1] + "\n";
+        if (!v.discontinuity) {
+          if(v.cue) {
+            if(v.cue.type === 'OUT') {
+              m3u8 += "#EXT-X-CUE-OUT:DURATION=" + v.cue.duration + "\n";
+            } else if(v.cue.type === 'IN') {
+              m3u8 += "#EXT-X-CUE-IN" + "\n";
+            }
+          }
+          m3u8 += "#EXTINF:" + v.duration.toFixed(3) + ",\n";
+          m3u8 += v.uri + "\n";
         } else {
           if (i != 0){
             m3u8 += "#EXT-X-DISCONTINUITY\n";
@@ -300,10 +318,12 @@ class HLSVod {
         this.segments[bw].push(q);
       }
       const lastSeg = this.segments[bw][this.segments[bw].length - 1];
-      if (lastSeg && lastSeg[2]) {
-        this.timeOffset = lastSeg[2] + lastSeg[0]*1000;
+      if (lastSeg && lastSeg.timelinePosition) {
+        this.timeOffset = lastSeg.timelinePosition + lastSeg.duration * 1000;
       }
-      this.segments[bw].push([-1, '']);
+      this.segments[bw].push({
+        discontinuity: true
+      });
     }
 
     const audioGroups = this.previousVod.getAudioGroups();
@@ -318,7 +338,9 @@ class HLSVod {
           let q = lastMediaAudioSequence[idx];
           this.audioSegments[audioGroupId].push(q);
         }
-        this.audioSegments[audioGroupId].push([-1, '']);
+        this.audioSegments[audioGroupId].push({
+          discontinuity: true
+        });
       }
     }
   }
@@ -335,15 +357,13 @@ class HLSVod {
       let audioSequence = {};
 
       while (this.segments[bw][segIdx] && segIdx != this.segments[bw].length) {
-        if (this.segments[bw][segIdx][0] !== -1) {
-          duration += this.segments[bw][segIdx][0];
+        if (!this.segments[bw][segIdx].discontinuity) {
+          duration += this.segments[bw][segIdx].duration;
         }
-        //console.log(`${duration} < ${this.SEQUENCE_DURATION}`);
         if (duration < this.SEQUENCE_DURATION) {
           const bandwidths = Object.keys(this.segments);
           for (let i = 0; i < bandwidths.length; i++) {
             const bwIdx = bandwidths[i];
-            const v = {};
             if (!sequence[bwIdx]) {
               sequence[bwIdx] = [];
             }
@@ -390,7 +410,7 @@ class HLSVod {
         for (let seqNo = 0; seqNo < this.mediaSequences.length; seqNo++) {
           const mseq = this.mediaSequences[seqNo];
           const bwIdx = Object.keys(mseq.segments)[0];
-          if (mseq.segments[bwIdx] && mseq.segments[bwIdx][0] && mseq.segments[bwIdx][0][0] === -1) {
+          if (mseq.segments[bwIdx] && mseq.segments[bwIdx][0] && mseq.segments[bwIdx][0].discontinuity) {
             debug(`Discontinuity in first segment of media seq ${seqNo}`);
             discSeqNo++;
             debug(`Increasing discont sequence ${discSeqNo}`);
@@ -427,7 +447,6 @@ class HLSVod {
       let bw = bandwidth;
       let spliceBw = bandwidth;
       debug(`Loading media manifest for bandwidth=${bw}`);
-      debug(`Media manifest URI: ${mediaManifestUri}`);
 
       if (this.previousVod) {
         debug(`We have a previous VOD and need to match ${bw} with ${Object.keys(this.segments)}`);
@@ -439,7 +458,7 @@ class HLSVod {
         } 
       }
       let timelinePosition = 0;
-  
+
       parser.on('m3u', m3u => {
         if (!this.segmentsInitiated[bw]) {
           let position = 0;
@@ -469,33 +488,42 @@ class HLSVod {
               segmentUri = url.resolve(baseUrl, playlistItem.properties.uri);
             }
             if (playlistItem.properties.discontinuity) {
-              this.segments[bw].push([-1]);
+              this.segments[bw].push({
+                discontinuity: true
+              });
             }
             let diff = 0;
             if (nextSplicePosition != null && position + playlistItem.properties.duration > nextSplicePosition) {
               debug(`Inserting splice at ${bw}:${position} (${i})`);
               diff = position - nextSplicePosition;
-              if (this.segments[bw].length > 0 && this.segments[bw][this.segments[bw].length - 1][0] !== -1) {
+              if (this.segments[bw].length > 0 && !this.segments[bw][this.segments[bw].length - 1].discontinuity) {
                 // Only insert discontinuity if this is not the first segment
                 debug(`Inserting discontinuity at ${bw}:${position} (${i}/${m3u.items.PlaylistItem.length})`);
-                this.segments[bw].push([-1]);                
+                this.segments[bw].push({
+                  discontinuity: true
+                });                
               }
               if (this.splices[spliceIdx].segments[spliceBw]) {
                 debug(`Inserting ${this.splices[spliceIdx].segments[spliceBw].length} ad segments`);
                 this.splices[spliceIdx].segments[spliceBw].forEach(v => {
-                  let q = [ v[0], v[1] ];
-                  if (this.timeOffset != null) {
-                    q.push(this.timeOffset + timelinePosition);
+                  let q = {
+                    duration: v[0],
+                    uri: v[1],
+                    timelinePosition: this.timeOffset != null ? this.timeOffset + timelinePosition : null,
+                    discontinuity: false
                   }
+
                   this.segments[bw].push(q);
-                  position += q[0];
-                  timelinePosition += (q[0] * 1000);
+                  position += q.duration;
+                  timelinePosition += (q.duration * 1000);
                 });
                 if (i != m3u.items.PlaylistItem.length - 1) {
                   // Only insert discontinuity after ad segments if this break is not at the end
                   // of the segment list
                   debug(`Inserting discontinuity after ad segments`);                  
-                  this.segments[bw].push([-1]);
+                  this.segments[bw].push({
+                    discontinuity: true
+                  });
                 }
               }
               spliceIdx++;
@@ -510,13 +538,30 @@ class HLSVod {
               this.segments[bw].pop(); // Remove extra disc
               i--;
             } else {
-              let q = [ playlistItem.properties.duration, segmentUri ];
-              if (this.timeOffset != null) {
-                q.push(this.timeOffset + timelinePosition);
+              let cueOut = playlistItem.get('cueout');
+              let cueIn = playlistItem.get('cuein');
+
+              let cueType = '';
+              if(cueOut || cueIn) {
+                if(cueOut) {
+                  cueType = 'OUT';
+                } else {
+                  cueType = 'IN';
+                }
+              }
+              let cue = cueType !== '' ? {
+                type: cueType,
+                duration: cueType === 'OUT' ? cueOut : 0
+              } : null;
+              let q = {
+                duration: playlistItem.properties.duration,
+                uri: segmentUri,
+                timelinePosition: this.timeOffset != null ? this.timeOffset + timelinePosition : null,
+                cue: cue
               }
               this.segments[bw].push(q);
-              position += playlistItem.properties.duration;
-              timelinePosition += playlistItem.properties.duration * 1000;
+              position += q.duration;
+              timelinePosition += q.duration * 1000;
             }
           }
           if (this.startTimeOffset != null) {
@@ -526,11 +571,11 @@ class HLSVod {
               if (!removed) {
                 remain = 0;
               } else {
-                remain -= removed[0] * 1000;
+                remain -= removed.duration * 1000;
               }
             }
-          }
-          this.targetDuration[bw] = Math.ceil(this.segments[bw].map(el => el ? el[0] : 0).reduce((max, cur) => Math.max(max, cur), -Infinity));
+          }          
+          this.targetDuration[bw] = Math.ceil(this.segments[bw].map(el => el ? el.duration : 0).reduce((max, cur) => Math.max(max, cur), -Infinity));
           this.segmentsInitiated[bw] = true;
         } else {
           debug(`Segments for ${bw} already initiated, skipping`);
@@ -578,12 +623,17 @@ class HLSVod {
               segmentUri = url.resolve(baseUrl, playlistItem.properties.uri);
             }
             if (playlistItem.properties.discontinuity) {
-              this.audioSegments[groupId].push([-1]);
+              this.audioSegments[groupId].push({
+                discontinuity: true
+              });
             }
-            let q = [ playlistItem.properties.duration, segmentUri ];
+            let q = {
+              duration: playlistItem.properties.duration,
+              uri: segmentUri
+            };
             this.audioSegments[groupId].push(q);
           }
-          this.targetAudioDuration[groupId] = Math.ceil(this.audioSegments[groupId].map(el => el ? el[0] : 0).reduce((max, cur) => Math.max(max, cur), -Infinity));
+          this.targetAudioDuration[groupId] = Math.ceil(this.audioSegments[groupId].map(el => el ? el.duration : 0).reduce((max, cur) => Math.max(max, cur), -Infinity));
         }
         resolve();
       });
