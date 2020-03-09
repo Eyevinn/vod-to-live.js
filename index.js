@@ -221,15 +221,14 @@ class HLSVod {
         }
         
         if (!v.discontinuity) {
-          if(v.cue) {
-            if(v.cue.type === 'OUT') {
-              m3u8 += "#EXT-X-CUE-OUT:DURATION=" + v.cue.duration + "\n";
-            } else if(v.cue.type === 'IN') {
-              m3u8 += "#EXT-X-CUE-IN" + "\n";
-            }
+          if(v.cue && v.cue.out) {
+            m3u8 += "#EXT-X-CUE-OUT:DURATION=" + v.cue.duration + "\n";
           }
           m3u8 += "#EXTINF:" + v.duration.toFixed(3) + ",\n";
           m3u8 += v.uri + "\n";
+          if(v.cue && v.cue.in) {
+            m3u8 += "#EXT-X-CUE-IN" + "\n";
+          }
         } else {
           if (i != 0){
             m3u8 += "#EXT-X-DISCONTINUITY\n";
@@ -266,15 +265,14 @@ class HLSVod {
           }
         }
         if (!v.discontinuity) {
-          if(v.cue) {
-            if(v.cue.type === 'OUT') {
-              m3u8 += "#EXT-X-CUE-OUT:DURATION=" + v.cue.duration + "\n";
-            } else if(v.cue.type === 'IN') {
-              m3u8 += "#EXT-X-CUE-IN" + "\n";
-            }
+          if(v.cue && v.cue.out) {
+            m3u8 += "#EXT-X-CUE-OUT:DURATION=" + v.cue.duration + "\n";
           }
           m3u8 += "#EXTINF:" + v.duration.toFixed(3) + ",\n";
           m3u8 += v.uri + "\n";
+          if(v.cue && v.cue.in) {
+            m3u8 += "#EXT-X-CUE-IN" + "\n";
+          }
         } else {
           if (i != 0){
             m3u8 += "#EXT-X-DISCONTINUITY\n";
@@ -540,18 +538,10 @@ class HLSVod {
             } else {
               let cueOut = playlistItem.get('cueout');
               let cueIn = playlistItem.get('cuein');
-
-              let cueType = '';
-              if(cueOut || cueIn) {
-                if(cueOut) {
-                  cueType = 'OUT';
-                } else {
-                  cueType = 'IN';
-                }
-              }
-              let cue = cueType !== '' ? {
-                type: cueType,
-                duration: cueType === 'OUT' ? cueOut : 0
+              let cue = (cueOut || cueIn) ? {
+                out: (typeof cueOut !== 'undefined'),
+                in: cueIn ? true : false,
+                duration: (typeof cueOut !== 'undefined') ? cueOut : 0
               } : null;
               let q = {
                 duration: playlistItem.properties.duration,
