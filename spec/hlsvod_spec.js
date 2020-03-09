@@ -796,8 +796,39 @@ describe("HLSVod with discontinuites in the source", () => {
     });
   });
 });
-  
+
 describe("HLSVod with ad tags", () => {
+  let mockMasterManifest;
+  let mockMediaManifest;
+
+  beforeEach(() => {
+    mockMasterManifest = function() {
+      return fs.createReadStream('testvectors/hls8/master.m3u8');
+    };
+
+    mockMediaManifest = function(bandwidth) {
+      const fname = {
+        '1010931': 'index_1010931.m3u8'
+      };
+      return fs.createReadStream('testvectors/hls8/' + fname[bandwidth]);
+    };
+  });
+
+  it("includes ad tags", done => {
+    mockVod = new HLSVod('http://mock.com/mock.m3u8');
+    mockVod.load(mockMasterManifest, mockMediaManifest)
+    .then(() => {
+      let m3u8 = mockVod.getLiveMediaSequences(0, '1010931', 0);
+      let m = m3u8.match('#EXT-X-CUE-OUT:DURATION=30');
+      expect(m).not.toBeNull();
+      m = m3u8.match('#EXT-X-CUE-IN');
+      expect(m).not.toBeNull();
+      done();
+    });
+  });
+});
+  
+describe("HLSVod with audio manifest and ad tags", () => {
   let mockMasterManifest;
   let mockMediaManifest;
 
