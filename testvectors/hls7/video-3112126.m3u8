@@ -36,6 +36,7 @@
 1woxvooiidb(11186147_ISMUSP)-video=3112126-14.ts
 #EXTINF:3, no desc
 1woxvooiidb(11186147_ISMUSP)-video=3112126-15.ts
+#EXT-X-CUE-OUT:DURATION=30
 #EXTINF:3, no desc
 1woxvooiidb(11186147_ISMUSP)-video=3112126-16.ts
 #EXTINF:3, no desc
@@ -56,6 +57,7 @@
 1woxvooiidb(11186147_ISMUSP)-video=3112126-24.ts
 #EXTINF:3, no desc
 1woxvooiidb(11186147_ISMUSP)-video=3112126-25.ts
+#EXT-X-CUE-IN
 #EXTINF:2, no desc
 1woxvooiidb(11186147_ISMUSP)-video=3112126-26.ts
 #EXT-X-ENDLIST
