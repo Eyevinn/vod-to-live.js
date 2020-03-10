@@ -102,6 +102,21 @@ describe("HLSVod standalone", () => {
       done();
     });
   });
+
+  it("handles start time offset when loading after another VOD", done => {
+    mockVod1 = new HLSVod('http://mock.com/mock.m3u8', null, null, 0);
+    let mockVod2 = new HLSVod('http://mock.com/mock2.m3u8', null, null, 27 * 1000);
+    mockVod1.load(mockMasterManifest, mockMediaManifest)
+    .then(() => {
+      return mockVod2.loadAfter(mockVod1, mockMasterManifest, mockMediaManifest);
+    })
+    .then(() => {
+      const seqSegments = mockVod2.getLiveMediaSequenceSegments(0);
+      expect(seqSegments['1497000'][5].discontinuity).toBe(true);
+      expect(seqSegments['1497000'][6].uri).toEqual("https://tv4play-i.akamaihd.net/i/mp4root/2018-01-26/pid200032972(3953564_,T3MP445,T3MP435,T3MP425,T3MP415,T3MP48,T3MP43,T3MP4130,).mp4.csmil/segment4_3_av.ts");
+      done();
+    });
+  });
 });
 
 describe("HLSVod after another VOD", () => {
@@ -905,7 +920,6 @@ describe("HLSVod with ad tags after another VOD", () => {
       return mockVod2.loadAfter(mockVod, mockMasterManifest2, mockMediaManifest2);
     }).then(() => {
       let m3u8 = mockVod2.getLiveMediaSequences(0, '1010931', 0);
-      console.log(m3u8);
       let m;
       m = m3u8.match(/#EXT-X-TARGETDURATION:\d+/);
       expect(m).not.toBeNull();

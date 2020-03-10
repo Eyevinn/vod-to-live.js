@@ -462,8 +462,22 @@ class HLSVod {
           let position = 0;
           let nextSplicePosition = null;
           let spliceIdx = 0;
+          
+          // Remove segments in the beginning if we have a start time offset
+          if (this.startTimeOffset != null) {
+            let remain = this.startTimeOffset;
+            while(remain > 0) {
+              const removed = m3u.items.PlaylistItem.shift();
+              if (!removed) {
+                remain = 0;
+              } else {
+                remain -= removed.properties.duration * 1000;
+              }
+            }
+          }
 
           for (let i = 0; i < m3u.items.PlaylistItem.length; i++) {
+
             if (this.splices[spliceIdx]) {
               nextSplicePosition = this.splices[spliceIdx].position;
               spliceBw = this._getNearestBandwidthForSplice(this.splices[spliceIdx], bw);
@@ -554,17 +568,7 @@ class HLSVod {
               timelinePosition += q.duration * 1000;
             }
           }
-          if (this.startTimeOffset != null) {
-            let remain = this.startTimeOffset;
-            while(remain > 0) {
-              const removed = this.segments[bw].shift();
-              if (!removed) {
-                remain = 0;
-              } else {
-                remain -= removed.duration * 1000;
-              }
-            }
-          }
+
           this.targetDuration[bw] = Math.ceil(this.segments[bw].map(el => el && el.duration ? el.duration : 0).reduce((max, cur) => Math.max(max, cur), -Infinity));
           this.segmentsInitiated[bw] = true;
         } else {
