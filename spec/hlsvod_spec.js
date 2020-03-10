@@ -866,3 +866,52 @@ describe("HLSVod with audio manifest and ad tags", () => {
     });
   });
 });
+
+describe("HLSVod with ad tags after another VOD", () => {
+  let mockMasterManifest1;
+  let mockMediaManifest1;
+  let mockMasterManifest2;
+  let mockMediaManifest2;
+
+  beforeEach(() => {
+    mockMasterManifest1 = function() {
+      return fs.createReadStream('testvectors/hls9/master.m3u8');
+    };
+
+    mockMasterManifest2 = function() {
+      return fs.createReadStream('testvectors/hls8/master.m3u8');
+    };
+
+    mockMediaManifest1 = function(bandwidth) {
+      const fname = {
+        '1010931': 'index_1010931.m3u8',
+      };
+      return fs.createReadStream('testvectors/hls9/' + fname[bandwidth]);
+    };
+
+    mockMediaManifest2 = function(bandwidth) {
+      const fname = {
+        '1010931': 'index_1010931.m3u8',
+      };
+      return fs.createReadStream('testvectors/hls8/' + fname[bandwidth]);
+    };
+  });
+
+  it("includes ad tags", done => {
+    mockVod = new HLSVod('http://mock.com/mock.m3u8');
+    mockVod2 = new HLSVod('http://mock.com/mock2.m3u8');
+    mockVod.load(mockMasterManifest1, mockMediaManifest1)
+    .then(() => {
+      return mockVod2.loadAfter(mockVod, mockMasterManifest2, mockMediaManifest2);
+    }).then(() => {
+      let m3u8 = mockVod2.getLiveMediaSequences(0, '1010931', 0);
+      console.log(m3u8);
+      let m;
+      m = m3u8.match(/#EXT-X-TARGETDURATION:\d+/);
+      expect(m).not.toBeNull();
+      m = m3u8.match('#EXT-X-CUE-OUT:DURATION=30');
+      expect(m).not.toBeNull();
+      done();
+    });
+  });
+});

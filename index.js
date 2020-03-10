@@ -564,8 +564,8 @@ class HLSVod {
                 remain -= removed.duration * 1000;
               }
             }
-          }          
-          this.targetDuration[bw] = Math.ceil(this.segments[bw].map(el => el ? el.duration : 0).reduce((max, cur) => Math.max(max, cur), -Infinity));
+          }
+          this.targetDuration[bw] = Math.ceil(this.segments[bw].map(el => el && el.duration ? el.duration : 0).reduce((max, cur) => Math.max(max, cur), -Infinity));
           this.segmentsInitiated[bw] = true;
         } else {
           debug(`Segments for ${bw} already initiated, skipping`);
