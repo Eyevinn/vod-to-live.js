@@ -943,6 +943,61 @@ describe("HLSVod with ad tags after another VOD", () => {
       done();
     });
   });
+
+  describe("Three short HLSVods in a row", () => {
+    let mockMasterManifest = [];
+    let mockMediaManifest = [];
+
+    beforeEach(() => {
+      mockMasterManifest[0] = function() {
+        return fs.createReadStream('testvectors/hls9/master.m3u8');
+      };
+      mockMediaManifest[0] = function(bandwidth) {
+        const fname = {
+          '1010931': 'index_1010931.m3u8',
+        };
+        return fs.createReadStream('testvectors/hls9/' + fname[bandwidth]);
+      };
+      mockMasterManifest[1] = function() {
+        return fs.createReadStream('testvectors/hls8/master.m3u8');
+      };
+      mockMediaManifest[1] = function(bandwidth) {
+        const fname = {
+          '1010931': 'index_1010931.m3u8',
+        };
+        return fs.createReadStream('testvectors/hls8/' + fname[bandwidth]);
+      };
+
+      mockMasterManifest[2] = function() {
+        return fs.createReadStream('testvectors/hls9/master.m3u8');
+      };
+      mockMediaManifest[2] = function(bandwidth) {
+        const fname = {
+          '1010931': 'index_1010931.m3u8',
+        };
+        return fs.createReadStream('testvectors/hls9/' + fname[bandwidth]);
+      };
+    });
+
+    fit("provides a correct mediasequence with parts from all three VODs", done => {
+      let mockVod1 = new HLSVod('http://mock.com/mock.m3u8');
+      let mockVod2 = new HLSVod('http://mock.com/mock2.m3u8');
+      let mockVod3 = new HLSVod('http://mock.com/mock3.m3u8');
+      mockVod1.load(mockMasterManifest[0], mockMediaManifest[0])
+      .then(() => {
+        return mockVod2.loadAfter(mockVod1, mockMasterManifest[1], mockMediaManifest[1]);
+      })
+      .then(() => {
+        return mockVod3.loadAfter(mockVod2, mockMasterManifest[2], mockMediaManifest[2]);
+      }).then(() => {
+        const seqSegments = mockVod2.getLiveMediaSequenceSegments(1);
+        done();
+      }).catch(err => {
+        console.error(err);
+        done(err);
+      })
+    });
+  });
 });
 
 describe("HLSVod with alternative ad tags", () => {
