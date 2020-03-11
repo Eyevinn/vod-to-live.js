@@ -944,3 +944,32 @@ describe("HLSVod with ad tags after another VOD", () => {
     });
   });
 });
+
+describe("HLSVod with alternative ad tags", () => {
+  let mockMasterManifest;
+  let mockMediaManifest;
+
+  beforeEach(() => {
+    mockMasterManifest = function() {
+      return fs.createReadStream('testvectors/hls10/master.m3u8');
+    };
+
+    mockMediaManifest = function(bandwidth) {
+      const fname = {
+        '1010931': 'index_1010931.m3u8'
+      };
+      return fs.createReadStream('testvectors/hls10/' + fname[bandwidth]);
+    };
+  });
+
+  it("includes ad tags when EXT-X-CUE-OUT has no attribute duration", done => {
+    mockVod = new HLSVod('http://mock.com/mock.m3u8');
+    mockVod.load(mockMasterManifest, mockMediaManifest)
+    .then(() => {
+      let m3u8 = mockVod.getLiveMediaSequences(0, '1010931', 0);
+      let m = m3u8.match('#EXT-X-CUE-OUT:DURATION=30');
+      expect(m).not.toBeNull();
+      done();
+    });
+  });
+});
