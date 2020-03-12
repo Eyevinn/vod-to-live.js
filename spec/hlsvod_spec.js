@@ -973,3 +973,32 @@ describe("HLSVod with alternative ad tags", () => {
     });
   });
 });
+
+describe("HLSVod with cue-out-cont tags", () => {
+  let mockMasterManifest;
+  let mockMediaManifest;
+
+  beforeEach(() => {
+    mockMasterManifest = function() {
+      return fs.createReadStream('testvectors/hls11/master.m3u8');
+    };
+
+    mockMediaManifest = function(bandwidth) {
+      const fname = {
+        '1010931': 'index_1010931.m3u8'
+      };
+      return fs.createReadStream('testvectors/hls11/' + fname[bandwidth]);
+    };
+  });
+
+  it("includes cue-out-cont tags in media sequence", done => {
+    mockVod = new HLSVod('http://mock.com/mock.m3u8');
+    mockVod.load(mockMasterManifest, mockMediaManifest)
+    .then(() => {
+      let m3u8 = mockVod.getLiveMediaSequences(0, '1010931', 0);
+      let m = m3u8.match('#EXT-X-CUE-OUT-CONT:18/28');
+      expect(m).not.toBeNull();
+      done();
+    });
+  });
+});
