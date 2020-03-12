@@ -224,6 +224,9 @@ class HLSVod {
           if(v.cue && v.cue.out) {
             m3u8 += "#EXT-X-CUE-OUT:DURATION=" + v.cue.duration + "\n";
           }
+          if (v.cue && v.cue.cont) {
+            m3u8 += "#EXT-X-CUE-OUT-CONT:" + v.cue.cont + "/" + v.cue.duration + "\n";
+          }
           m3u8 += "#EXTINF:" + v.duration.toFixed(3) + ",\n";
           m3u8 += v.uri + "\n";
           if(v.cue && v.cue.in) {
@@ -267,6 +270,9 @@ class HLSVod {
         if (!v.discontinuity) {
           if(v.cue && v.cue.out) {
             m3u8 += "#EXT-X-CUE-OUT:DURATION=" + v.cue.duration + "\n";
+          }
+          if (v.cue && v.cue.cont) {
+            m3u8 += "#EXT-X-CUE-OUT-CONT:" + v.cue.cont + "/" + v.cue.duration + "\n";
           }
           m3u8 += "#EXTINF:" + v.duration.toFixed(3) + ",\n";
           m3u8 += v.uri + "\n";
@@ -552,10 +558,18 @@ class HLSVod {
             } else {
               let cueOut = playlistItem.get('cueout');
               let cueIn = playlistItem.get('cuein');
-              let cue = (cueOut || cueIn) ? {
+              let cueOutCont = playlistItem.get('cont-offset');
+              let duration = 0;
+              if (typeof cueOut !== 'undefined') {
+                duration = cueOut;
+              } else if (typeof cueOutCont !== 'undefined') {
+                duration = playlistItem.get('cont-dur');
+              }
+              let cue = (cueOut || cueIn || cueOutCont) ? {
                 out: (typeof cueOut !== 'undefined'),
+                cont: (typeof cueOutCont !== 'undefined') ? cueOutCont : null,
                 in: cueIn ? true : false,
-                duration: (typeof cueOut !== 'undefined') ? cueOut : 0
+                duration: duration
               } : null;
               let q = {
                 duration: playlistItem.properties.duration,
