@@ -1048,8 +1048,6 @@ describe("Three short HLSVods in a row", () => {
     }).then(() => {
       const seqSegments = mockVod3.getLiveMediaSequenceSegments(0);
       const m3u8 = mockVod3.getLiveMediaSequences(0, '1010931', 0);
-      // console.log('m3u8 is ', m3u8);
-      // console.log('seqSegs is ', seqSegments);
       expect(seqSegments['1010931'][0].uri).toEqual("http://mock.com/1010931/seg-3-v1-a1.ts");
       expect(seqSegments['1010931'][[seqSegments['1010931'].length - 1 - 1]].discontinuity).toBe(true); // Discontinuity
       expect(seqSegments['1010931'][[seqSegments['1010931'].length - 1]].uri).toEqual("http://mock.com/1010931/seg-1-v1-a1.ts");
