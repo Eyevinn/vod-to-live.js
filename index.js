@@ -211,7 +211,6 @@ class HLSVod {
     let previousSegment = null;
     for (let i = 0; i < this.mediaSequences[seqIdx].segments[bw].length; i++) {
       const v = this.mediaSequences[seqIdx].segments[bw][i];
-      
       if (v) {
         if (previousSegment != null) {
           if (previousSegment.discontinuity && v.timelinePosition) {
@@ -230,7 +229,7 @@ class HLSVod {
             m3u8 += "#EXT-X-CUE-IN" + "\n";
           }
         } else {
-          if (i != 0){
+          if (i != 0 && previousSegment != null && previousSegment.discontinuity){
             m3u8 += "#EXT-X-DISCONTINUITY\n";
           }
         }
@@ -274,7 +273,7 @@ class HLSVod {
             m3u8 += "#EXT-X-CUE-IN" + "\n";
           }
         } else {
-          if (i != 0){
+          if (i != 0 && previousSegment != null && previousSegment.discontinuity){
             m3u8 += "#EXT-X-DISCONTINUITY\n";
           }
         }
