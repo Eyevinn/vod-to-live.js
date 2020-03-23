@@ -229,7 +229,7 @@ class HLSVod {
             m3u8 += "#EXT-X-CUE-IN" + "\n";
           }
         } else {
-          if (i != 0 && previousSegment != null && previousSegment.discontinuity){
+          if (i != 0){
             m3u8 += "#EXT-X-DISCONTINUITY\n";
           }
         }
@@ -273,7 +273,7 @@ class HLSVod {
             m3u8 += "#EXT-X-CUE-IN" + "\n";
           }
         } else {
-          if (i != 0 && previousSegment != null && previousSegment.discontinuity){
+          if (i != 0){
             m3u8 += "#EXT-X-DISCONTINUITY\n";
           }
         }
@@ -364,6 +364,7 @@ class HLSVod {
             if (!sequence[bwIdx]) {
               sequence[bwIdx] = [];
             }
+          
             sequence[bwIdx].push(this.segments[bwIdx][segIdx]);
           }
           if (audioGroupId) {
@@ -383,12 +384,13 @@ class HLSVod {
             segments: sequence,
             audioSegments: audioSequence
           });
-          sequence = [];
-          audioSequence = [];
+          sequence = {};
+          audioSequence = {};
           segOffset++;
           segIdx = segOffset;
         }
       }
+      
       if (duration < this.SEQUENCE_DURATION) {
         // We are out of segments but have not reached the full duration of a sequence
         duration = 0;
@@ -396,8 +398,8 @@ class HLSVod {
           segments: sequence,
           audioSegments: audioSequence
         });
-        sequence = [];
-        audioSequence = [];
+        sequence = {};
+        audioSequence = {};
       }
 
       if (!this.mediaSequences) {
