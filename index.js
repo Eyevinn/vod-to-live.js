@@ -310,9 +310,11 @@ class HLSVod {
       if (!this.segments[bw]) {
         this.segments[bw] = [];
       }
-      for(let idx = 1; idx < lastMediaSequence.length; idx++) {
+      for(let idx = 0; idx < lastMediaSequence.length; idx++) {
         let q = lastMediaSequence[idx];
-        this.segments[bw].push(q);
+        if(!q.discontinuity) {
+          this.segments[bw].push(q);
+        }
       }
       const lastSeg = this.segments[bw][this.segments[bw].length - 1];
       if (lastSeg && lastSeg.timelinePosition) {
@@ -352,7 +354,6 @@ class HLSVod {
 
       const audioGroupId = this._getFirstAudioGroupWithSegments();
       let audioSequence = {};
-
       while (this.segments[bw][segIdx] && segIdx != this.segments[bw].length) {
         if (!this.segments[bw][segIdx].discontinuity) {
           duration += this.segments[bw][segIdx].duration;
@@ -365,7 +366,14 @@ class HLSVod {
               sequence[bwIdx] = [];
             }
           
-            sequence[bwIdx].push(this.segments[bwIdx][segIdx]);
+            // Filter double discontinuities
+            if(this.segments[bw][segIdx].discontinuity) {
+              if(!this.segments[bw][segIdx - 1] || !this.segments[bw][segIdx - 1].discontinuity) {
+                sequence[bwIdx].push(this.segments[bwIdx][segIdx]);
+              }
+            } else {
+              sequence[bwIdx].push(this.segments[bwIdx][segIdx]);
+            }
           }
           if (audioGroupId) {
             const audioGroupIds = Object.keys(this.audioSegments);

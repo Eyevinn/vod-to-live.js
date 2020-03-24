@@ -947,10 +947,11 @@ describe("HLSVod with ad tags after another VOD", () => {
   });
 });
 
-describe("Three short HLSVods in a row", () => {
+describe("Two short HLSVods", () => {
   let mockMasterManifest = [];
   let mockMediaManifest = [];
   const vectorPath = 'hls9';
+  const vectorPath2 = 'hls10';
   beforeEach(() => {
     mockMasterManifest[0] = function() {
       return fs.createReadStream('testvectors/' + vectorPath + '/master.m3u8');
@@ -962,51 +963,91 @@ describe("Three short HLSVods in a row", () => {
       return fs.createReadStream('testvectors/' + vectorPath + '/' + fname[bandwidth]);
     };
     mockMasterManifest[1] = function() {
-      return fs.createReadStream('testvectors/' + vectorPath + '/master.m3u8');
+      return fs.createReadStream('testvectors/' + vectorPath2 + '/master.m3u8');
     };
     mockMediaManifest[1] = function(bandwidth) {
       const fname = {
         '1010931': 'index_1010931.m3u8',
       };
-      return fs.createReadStream('testvectors/' + vectorPath + '/' + fname[bandwidth]);
-    };
-
-    mockMasterManifest[2] = function() {
-      return fs.createReadStream('testvectors/' + vectorPath + '/master.m3u8');
-    };
-    mockMediaManifest[2] = function(bandwidth) {
-      const fname = {
-        '1010931': 'index_1010931.m3u8',
-      };
-      return fs.createReadStream('testvectors/' + vectorPath + '/' + fname[bandwidth]);
+      return fs.createReadStream('testvectors/' + vectorPath2 + '/' + fname[bandwidth]);
     };
   });
 
-  it("provides a correct mediasequence with parts from all three VODs", done => {
+  fit("provides a correct mediasequence when first VOD has no discontinuity", done => {
     let mockVod1 = new HLSVod('http://mock.com/mock.m3u8');
     let mockVod2 = new HLSVod('http://mock.com/mock2.m3u8');
-    let mockVod3 = new HLSVod('http://mock.com/mock3.m3u8');
     mockVod1.load(mockMasterManifest[0], mockMediaManifest[0])
     .then(() => {
+      console.log('1 loaded');
       return mockVod2.loadAfter(mockVod1, mockMasterManifest[1], mockMediaManifest[1]);
     })
     .then(() => {
-      return mockVod3.loadAfter(mockVod2, mockMasterManifest[2], mockMediaManifest[2]);
-    }).then(() => {      
-      const seqSegments0 = mockVod3.getLiveMediaSequenceSegments(0);
-      const seqSegments1 = mockVod3.getLiveMediaSequenceSegments(1);
-      expect(seqSegments0['1010931'][0].uri).toEqual("http://mock.com/1010931/seg-3-v1-a1.ts");
-      expect(seqSegments0['1010931'][[seqSegments0['1010931'].length - 2]].discontinuity).toBe(true);
-      expect(seqSegments0['1010931'][[seqSegments0['1010931'].length - 1]].uri).toEqual("http://mock.com/1010931/seg-1-v1-a1.ts");
-      expect(seqSegments1['1010931'][0].uri).toEqual("http://mock.com/1010931/seg-4-v1-a1.ts");
-      expect(seqSegments1['1010931'][[seqSegments1['1010931'].length - 3]].discontinuity).toBe(true); // Discontinuity moved back 1
-      expect(seqSegments1['1010931'][[seqSegments1['1010931'].length - 1]].uri).toEqual("http://mock.com/1010931/seg-2-v1-a1.ts");
+      console.log('2 loaded');
+      const seqSegments = mockVod2.getLiveMediaSequenceSegments(0);
+      const seqSegments1 = mockVod2.getLiveMediaSequenceSegments(1);
+      console.log('seqSegments:', seqSegments);
+      console.log('seqSegments1:', seqSegments1);
       done();
     }).catch(err => {
       console.error(err);
       done(err);
     })
   });
+
+  fit("provides a correct mediasequence when first VOD has discontinuity", done => {
+    let mockVod1 = new HLSVod('http://mock.com/mock.m3u8');
+    let mockVod2 = new HLSVod('http://mock.com/mock2.m3u8');
+    mockVod1.load(mockMasterManifest[1], mockMediaManifest[1])
+    .then(() => {
+      console.log('1 loaded');
+      return mockVod2.loadAfter(mockVod1, mockMasterManifest[1], mockMediaManifest[1]);
+    })
+    .then(() => {
+      console.log('2 loaded');
+      const seqSegments = mockVod2.getLiveMediaSequenceSegments(0);
+      const seqSegments1 = mockVod2.getLiveMediaSequenceSegments(1);
+      console.log('seqSegments:', seqSegments);
+      console.log('seqSegments1:', seqSegments1);
+      done();
+    }).catch(err => {
+      console.error(err);
+      done(err);
+    })
+  });
+});
+
+  // fit("provides a correct mediasequence with parts from all three VODs", done => {
+  //   let mockVod1 = new HLSVod('http://mock.com/mock.m3u8');
+  //   let mockVod2 = new HLSVod('http://mock.com/mock2.m3u8');
+  //   let mockVod3 = new HLSVod('http://mock.com/mock3.m3u8');
+  //   mockVod1.load(mockMasterManifest[0], mockMediaManifest[0])
+  //   .then(() => {
+  //     console.log('1 loaded');
+  //     return mockVod2.loadAfter(mockVod1, mockMasterManifest[1], mockMediaManifest[1]);
+  //   })
+  //   .then(() => {
+  //     console.log('2 loaded');
+  //     const seqSegments = mockVod2.getLiveMediaSequenceSegments(0);
+  //     const seqSegments1 = mockVod2.getLiveMediaSequenceSegments(1);
+
+  //     console.log('seqSegments:', seqSegments);
+  //     console.log('seqSegments1:', seqSegments1);
+    //   return mockVod3.loadAfter(mockVod2, mockMasterManifest[2], mockMediaManifest[2]);
+    // }).then(() => {      
+      // const seqSegments0 = mockVod3.getLiveMediaSequenceSegments(0);
+      // const seqSegments1 = mockVod3.getLiveMediaSequenceSegments(1);
+      // expect(seqSegments0['1010931'][0].uri).toEqual("http://mock.com/1010931/seg-2-v1-a1.ts");
+      // expect(seqSegments0['1010931'][[seqSegments0['1010931'].length - 2]].discontinuity).toBe(true);
+      // expect(seqSegments0['1010931'][[seqSegments0['1010931'].length - 1]].uri).toEqual("http://mock.com/1010931/seg-1-v1-a1.ts");
+      // expect(seqSegments1['1010931'][0].uri).toEqual("http://mock.com/1010931/seg-4-v1-a1.ts");
+      // expect(seqSegments1['1010931'][[seqSegments1['1010931'].length - 3]].discontinuity).toBe(true); // Discontinuity moved back 1
+      // expect(seqSegments1['1010931'][[seqSegments1['1010931'].length - 1]].uri).toEqual("http://mock.com/1010931/seg-2-v1-a1.ts");
+    //   done();
+    // }).catch(err => {
+    //   console.error(err);
+    //   done(err);
+    // })
+  // });
 
   // it("should remove double discontinuity tags", done => {
   //   let mockVod1 = new HLSVod('http://mock.com/mock.m3u8');
@@ -1033,8 +1074,6 @@ describe("Three short HLSVods in a row", () => {
   //     done(err);
   //   })
   // });
-
-});
 
 describe("HLSVod with alternative ad tags", () => {
   let mockMasterManifest;
