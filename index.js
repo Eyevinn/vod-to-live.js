@@ -188,9 +188,10 @@ class HLSVod {
   getLiveMediaSequences(offset, bandwidth, seqIdx, discOffset) {
     const bw = this._getNearestBandwidthWithInitiatedSegments(bandwidth);
     debug(`Get live media sequence [${seqIdx}] for bw=${bw} (requested bw ${bandwidth})`);
+    const targetDuration = this._determineTargetDuration(this.mediaSequences[seqIdx].segments[bw]);
     let m3u8 = "#EXTM3U\n";
     m3u8 += "#EXT-X-VERSION:3\n";
-    m3u8 += "#EXT-X-TARGETDURATION:" + this.targetDuration[bw] + "\n";
+    m3u8 += "#EXT-X-TARGETDURATION:" + targetDuration + "\n";
     m3u8 += "#EXT-X-MEDIA-SEQUENCE:" + (offset + seqIdx) + "\n";
     let discInOffset = discOffset;
     if (discInOffset == null) {
@@ -246,9 +247,11 @@ class HLSVod {
 
   getLiveMediaAudioSequences(offset, audioGroupId, seqIdx, discOffset) {
     debug(`Get live audio media sequence [${seqIdx}] for audioGroupId=${audioGroupId}`);
+    const targetDuration = this._determineTargetDuration(this.mediaSequences[seqIdx].audioSegments[audioGroupId]);
+
     let m3u8 = "#EXTM3U\n";
     m3u8 += "#EXT-X-VERSION:3\n";
-    m3u8 += "#EXT-X-TARGETDURATION:" + this.targetAudioDuration[audioGroupId] + "\n";
+    m3u8 += "#EXT-X-TARGETDURATION:" + targetDuration + "\n";
     m3u8 += "#EXT-X-MEDIA-SEQUENCE:" + (offset + seqIdx) + "\n";
     let discInOffset = discOffset;
     if (discInOffset == null) {
@@ -729,6 +732,16 @@ class HLSVod {
     return availableBandwidths[availableBandwidths.length - 1];    
   }
 
+  _determineTargetDuration(segments) {
+    let targetDuration = 0;
+    for (let i = 0; i < segments.length; i++) {
+      const seg = segments[i];
+      if (seg.duration > targetDuration) {
+        targetDuration = seg.duration;
+      }
+    }
+    return targetDuration;
+  }
 }
 
 module.exports = HLSVod;

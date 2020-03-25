@@ -1169,3 +1169,49 @@ describe("HLSVod with cue-out-cont tags", () => {
     });
   });
 });
+
+describe("HLSVod with mixed target durations", () => {
+  let mockMasterManifest1;
+  let mockMediaManifest1;
+  let mockMasterManifest2;
+  let mockMediaManifest2;
+
+  beforeEach(() => {
+    mockMasterManifest1 = function() {
+      return fs.createReadStream('testvectors/hls14/master.m3u8');
+    };
+
+    mockMediaManifest1 = function(bandwidth) {
+      const fname = {
+        '1010931': 'index_1010931.m3u8'
+      };
+      return fs.createReadStream('testvectors/hls14/' + fname[bandwidth]);
+    };
+
+    mockMasterManifest2 = function() {
+      return fs.createReadStream('testvectors/hls12/master.m3u8');
+    };
+
+    mockMediaManifest2 = function(bandwidth) {
+      const fname = {
+        '1010931': 'index_1010931.m3u8'
+      };
+      return fs.createReadStream('testvectors/hls12/' + fname[bandwidth]);
+    };
+
+  });
+
+  it("sets corect EXT-X-TARGETDURATION", done => {
+    let mockVod1 = new HLSVod('http://mock.com/mock.m3u8');
+    let mockVod2 = new HLSVod('http://mock.com/mock.m3u8');
+    mockVod1.load(mockMasterManifest1, mockMediaManifest1)
+    .then(() => {
+      return mockVod2.loadAfter(mockVod1, mockMasterManifest2, mockMediaManifest2);
+    })
+    .then(() => {
+      expect(mockVod1.getLiveMediaSequences(0, '1010931', 0).match('EXT-X-TARGETDURATION:4')).not.toBeNull();
+      expect(mockVod2.getLiveMediaSequences(0, '1010931', 0).match('EXT-X-TARGETDURATION:10')).not.toBeNull();
+      done();
+    });
+  });
+});
