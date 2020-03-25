@@ -778,7 +778,6 @@ describe("HLSVod with discontinuites in the source", () => {
       expect(seqSegments1['401000'][2].discontinuity).toBe(true);
 
       let m3u8 = mockVod.getLiveMediaAudioSequences(0, 'aac', 0);
-      console.log('m3u8 is ', m3u8);
       let m = m3u8.match('#EXT-X-DISCONTINUITY\n');
       expect(m).not.toBeNull();
       done();
@@ -993,7 +992,7 @@ describe("Two short HLSVods", () => {
     };
   });
 
-  it("provides a correct mediasequence when first VOD has no discontinuity", done => {
+  fit("provides a correct mediasequence when first VOD has no discontinuity", done => {
     let mockVod1 = new HLSVod('http://mock.com/mock.m3u8');
     let mockVod2 = new HLSVod('http://mock.com/mock2.m3u8');
     mockVod1.load(mockMasterManifest[0], mockMediaManifest[0])
@@ -1051,10 +1050,11 @@ describe("Two short HLSVods", () => {
       const segsVod1_0 = mockVod1.getLiveMediaSequenceSegments(0);
       const segsVod2_0 = mockVod2.getLiveMediaSequenceSegments(0);
       const segsVod2_1 = mockVod2.getLiveMediaSequenceSegments(1);
-      expect(segsVod2_0['1010931'][0].uri).toEqual("http://mock.com/1010931/seg-2-v1-a1.ts");
-      expect(segsVod2_1['1010931'][0].uri).toEqual("http://mock.com/1010931/seg-3-v1-a1.ts");
-      expect(segsVod2_0['1010931'][[segsVod1_0['1010931'].length]].discontinuity).toBe(true); // Identifies discontinuity right after vod1
-      expect(segsVod2_1['1010931'][[segsVod2_1['1010931'].length - 1]].uri).toEqual("http://mock.com/1010931/seg-1-v2-a1.ts");
+      expect(segsVod1_0['1010931'][0].uri).toEqual("http://mock.com/1010931/seg-1-v1-a1.ts");
+      expect(segsVod2_0['1010931'][0].uri).toEqual("http://mock.com/1010931/seg-3-v1-a1.ts");
+      expect(segsVod2_1['1010931'][0].uri).toEqual("http://mock.com/1010931/seg-4-v1-a1.ts");
+      expect(segsVod2_0['1010931'][[segsVod2_0['1010931'].length - 2]].discontinuity).toBe(true); // Identifies discontinuity right after vod1
+      expect(segsVod2_1['1010931'][[segsVod2_1['1010931'].length] - 1].uri).toEqual("http://mock.com/1010931/seg-2-v2-a1.ts");
       done();
     }).catch(err => {
       console.error(err);
@@ -1074,9 +1074,9 @@ describe("Two short HLSVods", () => {
       const segsVod2_0 = mockVod2.getLiveMediaSequenceSegments(0);
       const segsVod2_1 = mockVod2.getLiveMediaSequenceSegments(1);
       expect(segsVod1_0['1010931'][0].discontinuity).toBe(true);
-      expect(segsVod2_0['1010931'][0].uri).toEqual("http://mock.com/1010931/seg-8-v1-a1.ts");
-      expect(segsVod2_1['1010931'][0].uri).toEqual("http://mock.com/1010931/seg-9-v1-a1.ts");
-      expect(segsVod2_0['1010931'][[segsVod2_0['1010931'].length - 1]].discontinuity).toBe(true);
+      expect(segsVod2_0['1010931'][0].uri).toEqual("http://mock.com/1010931/seg-9-v1-a1.ts");
+      expect(segsVod2_1['1010931'][0].uri).toEqual("http://mock.com/1010931/seg-10-v1-a1.ts");
+      expect(segsVod2_0['1010931'][[segsVod2_0['1010931'].length - 2]].discontinuity).toBe(true);
       done();
     }).catch(err => {
       console.error(err);

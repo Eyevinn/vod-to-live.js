@@ -316,7 +316,7 @@ class HLSVod {
       if (!this.segments[bw]) {
         this.segments[bw] = [];
       }
-      for(let idx = 0; idx < lastMediaSequence.length; idx++) {
+      for(let idx = 1; idx < lastMediaSequence.length; idx++) {
         let q = lastMediaSequence[idx];
         if(!q.discontinuity) {
           this.segments[bw].push(q);
