@@ -364,6 +364,7 @@ class HLSVod {
         if (!this.segments[bw][segIdx].discontinuity) {
           duration += this.segments[bw][segIdx].duration;
         }
+//        console.log(segIdx, this.segments[bw][segIdx], duration, this.segments[bw].length);
         if (duration < this.SEQUENCE_DURATION) {
           const bandwidths = Object.keys(this.segments);
           for (let i = 0; i < bandwidths.length; i++) {
