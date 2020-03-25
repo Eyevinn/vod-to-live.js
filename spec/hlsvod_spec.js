@@ -952,6 +952,8 @@ describe("Two short HLSVods", () => {
   let mockMediaManifest = [];
   const vectorPath = 'hls9';
   const vectorPath2 = 'hls10';
+  const vectorPath3 = 'hls11';
+  const vectorPath4 = 'hls12';
   beforeEach(() => {
     mockMasterManifest[0] = function() {
       return fs.createReadStream('testvectors/' + vectorPath + '/master.m3u8');
@@ -971,22 +973,42 @@ describe("Two short HLSVods", () => {
       };
       return fs.createReadStream('testvectors/' + vectorPath2 + '/' + fname[bandwidth]);
     };
+    mockMasterManifest[2] = function() {
+      return fs.createReadStream('testvectors/' + vectorPath3 + '/master.m3u8');
+    };
+    mockMediaManifest[2] = function(bandwidth) {
+      const fname = {
+        '1010931': 'index_1010931.m3u8',
+      };
+      return fs.createReadStream('testvectors/' + vectorPath3 + '/' + fname[bandwidth]);
+    };
+    mockMasterManifest[3] = function() {
+      return fs.createReadStream('testvectors/' + vectorPath4 + '/master.m3u8');
+    };
+    mockMediaManifest[3] = function(bandwidth) {
+      const fname = {
+        '1010931': 'index_1010931.m3u8',
+      };
+      return fs.createReadStream('testvectors/' + vectorPath4 + '/' + fname[bandwidth]);
+    };
   });
 
-  fit("provides a correct mediasequence when first VOD has no discontinuity", done => {
+  it("provides a correct mediasequence when first VOD has no discontinuity", done => {
     let mockVod1 = new HLSVod('http://mock.com/mock.m3u8');
     let mockVod2 = new HLSVod('http://mock.com/mock2.m3u8');
     mockVod1.load(mockMasterManifest[0], mockMediaManifest[0])
     .then(() => {
-      console.log('1 loaded');
       return mockVod2.loadAfter(mockVod1, mockMasterManifest[1], mockMediaManifest[1]);
     })
     .then(() => {
-      console.log('2 loaded');
-      const seqSegments = mockVod2.getLiveMediaSequenceSegments(0);
-      const seqSegments1 = mockVod2.getLiveMediaSequenceSegments(1);
-      console.log('seqSegments:', seqSegments);
-      console.log('seqSegments1:', seqSegments1);
+      const segsVod1_0 = mockVod1.getLiveMediaSequenceSegments(0);
+      const segsVod2_0 = mockVod2.getLiveMediaSequenceSegments(0);
+      const segsVod2_1 = mockVod2.getLiveMediaSequenceSegments(1);
+      expect(segsVod2_0['1010931'][0].uri).toEqual("http://mock.com/1010931/seg-1-v1-a1.ts");
+      expect(segsVod2_1['1010931'][0].uri).toEqual("http://mock.com/1010931/seg-2-v1-a1.ts");
+      expect(segsVod2_0['1010931'][[segsVod1_0['1010931'].length]].discontinuity).toBe(true); // Identifies discontinuity right after vod1
+      expect(segsVod2_0['1010931'][[segsVod2_0['1010931'].length - 1]].uri).toEqual("http://mock.com/1010931/seg-5-v2-a1.ts");
+      expect(segsVod2_1['1010931'][[segsVod2_1['1010931'].length - 1]].uri).toEqual("http://mock.com/1010931/seg-6-v2-a1.ts");
       done();
     }).catch(err => {
       console.error(err);
@@ -994,20 +1016,67 @@ describe("Two short HLSVods", () => {
     })
   });
 
-  fit("provides a correct mediasequence when first VOD has discontinuity", done => {
+  it("provides a correct mediasequence when first VOD has discontinuity", done => {
     let mockVod1 = new HLSVod('http://mock.com/mock.m3u8');
     let mockVod2 = new HLSVod('http://mock.com/mock2.m3u8');
     mockVod1.load(mockMasterManifest[1], mockMediaManifest[1])
     .then(() => {
-      console.log('1 loaded');
+      return mockVod2.loadAfter(mockVod1, mockMasterManifest[1], mockMediaManifest[1]);
+    })
+    .then(() => {      
+      const segsVod1_0 = mockVod1.getLiveMediaSequenceSegments(0);
+      const segsVod2_0 = mockVod2.getLiveMediaSequenceSegments(0);
+      const segsVod2_1 = mockVod2.getLiveMediaSequenceSegments(1);
+      expect(segsVod1_0['1010931'][0].discontinuity).toBe(true);
+      expect(segsVod2_0['1010931'][0].uri).toEqual("http://mock.com/1010931/seg-1-v2-a1.ts");
+      expect(segsVod2_1['1010931'][0].uri).toEqual("http://mock.com/1010931/seg-2-v2-a1.ts");
+      expect(segsVod2_0['1010931'][[segsVod1_0['1010931'].length - 1]].discontinuity).toBe(true); // Identifies discontinuity right after vod1 (takes into account removed disc at start of vod1)
+      expect(segsVod2_0['1010931'][[segsVod2_0['1010931'].length - 1]].uri).toEqual("http://mock.com/1010931/seg-5-v2-a1.ts");
+      expect(segsVod2_1['1010931'][[segsVod2_1['1010931'].length - 1]].uri).toEqual("http://mock.com/1010931/seg-6-v2-a1.ts");
+      done();
+    }).catch(err => {
+      console.error(err);
+      done(err);
+    })
+  });
+
+  it("provides a correct mediasequence when first VOD has no discontinuity and 1 min long", done => {
+    let mockVod1 = new HLSVod('http://mock.com/mock.m3u8');
+    let mockVod2 = new HLSVod('http://mock.com/mock2.m3u8');
+    mockVod1.load(mockMasterManifest[2], mockMediaManifest[2])
+    .then(() => {
       return mockVod2.loadAfter(mockVod1, mockMasterManifest[1], mockMediaManifest[1]);
     })
     .then(() => {
-      console.log('2 loaded');
-      const seqSegments = mockVod2.getLiveMediaSequenceSegments(0);
-      const seqSegments1 = mockVod2.getLiveMediaSequenceSegments(1);
-      console.log('seqSegments:', seqSegments);
-      console.log('seqSegments1:', seqSegments1);
+      const segsVod1_0 = mockVod1.getLiveMediaSequenceSegments(0);
+      const segsVod2_0 = mockVod2.getLiveMediaSequenceSegments(0);
+      const segsVod2_1 = mockVod2.getLiveMediaSequenceSegments(1);
+      expect(segsVod2_0['1010931'][0].uri).toEqual("http://mock.com/1010931/seg-2-v1-a1.ts");
+      expect(segsVod2_1['1010931'][0].uri).toEqual("http://mock.com/1010931/seg-3-v1-a1.ts");
+      expect(segsVod2_0['1010931'][[segsVod1_0['1010931'].length]].discontinuity).toBe(true); // Identifies discontinuity right after vod1
+      expect(segsVod2_1['1010931'][[segsVod2_1['1010931'].length - 1]].uri).toEqual("http://mock.com/1010931/seg-1-v2-a1.ts");
+      done();
+    }).catch(err => {
+      console.error(err);
+      done(err);
+    })
+  });
+
+  it("provides a correct mediasequence when first VOD has no discontinuity and longer than 1 min", done => {
+    let mockVod1 = new HLSVod('http://mock.com/mock.m3u8');
+    let mockVod2 = new HLSVod('http://mock.com/mock2.m3u8');
+    mockVod1.load(mockMasterManifest[3], mockMediaManifest[3])
+    .then(() => {
+      return mockVod2.loadAfter(mockVod1, mockMasterManifest[1], mockMediaManifest[1]);
+    })
+    .then(() => {
+      const segsVod1_0 = mockVod1.getLiveMediaSequenceSegments(0);
+      const segsVod2_0 = mockVod2.getLiveMediaSequenceSegments(0);
+      const segsVod2_1 = mockVod2.getLiveMediaSequenceSegments(1);
+      expect(segsVod1_0['1010931'][0].discontinuity).toBe(true);
+      expect(segsVod2_0['1010931'][0].uri).toEqual("http://mock.com/1010931/seg-8-v1-a1.ts");
+      expect(segsVod2_1['1010931'][0].uri).toEqual("http://mock.com/1010931/seg-9-v1-a1.ts");
+      expect(segsVod2_0['1010931'][[segsVod2_0['1010931'].length - 1]].discontinuity).toBe(true);
       done();
     }).catch(err => {
       console.error(err);
