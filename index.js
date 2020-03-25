@@ -740,7 +740,7 @@ class HLSVod {
         targetDuration = seg.duration;
       }
     }
-    return targetDuration;
+    return Math.round(targetDuration);
   }
 }
 
