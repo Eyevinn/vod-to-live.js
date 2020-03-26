@@ -88,6 +88,7 @@ describe("HLSVod standalone", () => {
     mockVod.load(mockMasterManifest, mockMediaManifest)
     .then(() => {
       const seqSegments = mockVod.getLiveMediaSequenceSegments(0);
+      // TODO: Verify that all bitrates have the same length
       expect(seqSegments['2497000'][0].uri).toEqual("https://tv4play-i.akamaihd.net/i/mp4root/2018-01-26/pid200032972(3953564_,T3MP445,T3MP435,T3MP425,T3MP415,T3MP48,T3MP43,T3MP4130,).mp4.csmil/segment4_2_av.ts");
       done();
     });

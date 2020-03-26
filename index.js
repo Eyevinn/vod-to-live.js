@@ -95,6 +95,7 @@ class HLSVod {
           }
         }
         Promise.all(mediaManifestPromises.concat(audioManifestPromises))
+        .then(this._cleanupUnused.bind(this))
         .then(this._createMediaSequences.bind(this))
         .then(resolve)
         .catch(reject);
@@ -361,6 +362,22 @@ class HLSVod {
     }
   }
 
+  _cleanupUnused() {
+    return new Promise((resolve, reject) => {
+      // Remove all bandwidths that are remaining from previous VOD and has not been initiated
+      let toRemove = [];
+      Object.keys(this.segments).map(bw => {
+        if (!this.segmentsInitiated[bw]) {
+          toRemove.push(bw);
+        }
+      });
+      toRemove.map(bw => { 
+        this.segments[bw] = null;
+      });
+      resolve();
+    });
+  }
+
   _createMediaSequences() {
     return new Promise((resolve, reject) => {
       let segOffset = 0;
@@ -400,22 +417,13 @@ class HLSVod {
             if (!sequence[bwIdx]) {
               sequence[bwIdx] = [];
             }
-            // if (this.segments[bwIdx].length < length) {
-            //   length = this.segments[bwIdx].length;
-            // }
-            if (this.segments[bw].length != this.segments[bwIdx].length) {
-              console.error(`bw=${bw}.length=${this.segments[bw].length} != bw=${bwIdx}.length=${this.segments[bwIdx].length}`);
-              console.error(Object.keys(this.segments));
-              console.error(bandwidths);
-            }
 
             if (!this.segments[bwIdx][segIdx]) {
               // Should not happen, debug
               console.error(`The this.segments[bwIdx=${bwIdx}][segIdx=${segIdx}] is undefined`);
-              console.error(this.segments[bwIdx]);
-              if (segIdx > 0) {
-                console.error(this.segments[bwIdx][segIdx - 1]);
-              }
+              console.error("Initiated bandwidths: ", this.segmentsInitiated);
+              console.error(Object.keys(this.segments).map(b => { return { bw: b, len: this.segments[b].length}; }));
+              reject("Internal datastructure error");
             }
             sequence[bwIdx].push(this.segments[bwIdx][segIdx]);
           }
