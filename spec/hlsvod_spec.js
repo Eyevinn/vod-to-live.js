@@ -1073,7 +1073,6 @@ describe("Two short HLSVods", () => {
       const segsVod1_0 = mockVod1.getLiveMediaSequenceSegments(0);
       const segsVod2_0 = mockVod2.getLiveMediaSequenceSegments(0);
       const segsVod2_1 = mockVod2.getLiveMediaSequenceSegments(1);
-      expect(segsVod1_0['1010931'][0].discontinuity).toBe(true);
       expect(segsVod2_0['1010931'][0].uri).toEqual("http://mock.com/1010931/seg-9-v1-a1.ts");
       expect(segsVod2_1['1010931'][0].uri).toEqual("http://mock.com/1010931/seg-10-v1-a1.ts");
       expect(segsVod2_0['1010931'][[segsVod2_0['1010931'].length - 2]].discontinuity).toBe(true);
@@ -1103,7 +1102,7 @@ describe("Two short HLSVods", () => {
       const seqSegments3_0 = mockVod3.getLiveMediaSequenceSegments(0);
       expect(seqSegments2_0['1010931'][0].uri).toEqual('http://mock.com/1010931/seg-2-v1-a1.ts');
       expect(seqSegments3_0['1010931'][0].uri).toEqual('http://mock.com/1010931/seg-3-v1-a1.ts');
-      expect(seqSegments3_0['1010931'][seqSegments3_0['1010931'].length - 2].discontinuity).toBe(true);
+      expect(seqSegments3_0['1010931'][10].discontinuity).toBe(true);
       done();
     }).catch(err => {
       console.error(err);

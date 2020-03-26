@@ -316,14 +316,22 @@ class HLSVod {
     for (let i = 0; i < bandwidths.length; i++) {
       const bw = bandwidths[i];
       const lastMediaSequence = this.previousVod.getLiveMediaSequenceSegments(previousVodSeqCount - 1)[bw];
+      if (!lastMediaSequence) {
+        // should not happen, debug
+        debug(`Failed to get lastMediaSequence: previousVodSeqCount=${previousVodSeqCount}, bw=${bw}`);
+        debug(this.previousVod.getLiveMediaSequenceSegments(previousVodSeqCount - 1));
+      }
       if (!this.segments[bw]) {
         this.segments[bw] = [];
       }
       for(let idx = 1; idx < lastMediaSequence.length; idx++) {
         let q = lastMediaSequence[idx];
-        if(!q.discontinuity) {
-          this.segments[bw].push(q);
+        if (!q) {
+          // should not happen, debug
+          debug(`Failed to get segment from lastMediaSequence[${idx}]`);
+          debug(lastMediaSequence);
         }
+        this.segments[bw].push(q);
       }
       const lastSeg = this.segments[bw][this.segments[bw].length - 1];
       if (lastSeg && lastSeg.timelinePosition) {
@@ -331,6 +339,16 @@ class HLSVod {
       }
       this.segments[bw].push({
         discontinuity: true
+      });
+
+      // Remove all double discontinuities
+      this.segments[bw] = this.segments[bw].filter((elem, idx, arr) => {
+        if (idx > 0) {
+          if (arr[idx - 1].discontinuity) {
+            return false;
+          }
+        }
+        return true;
       });
     }
 
@@ -376,14 +394,7 @@ class HLSVod {
               sequence[bwIdx] = [];
             }
           
-            // Filter double discontinuities
-            if(this.segments[bw][segIdx].discontinuity) {
-              if(!this.segments[bw][segIdx - 1] || !this.segments[bw][segIdx - 1].discontinuity) {
-                sequence[bwIdx].push(this.segments[bwIdx][segIdx]);
-              }
-            } else {
-              sequence[bwIdx].push(this.segments[bwIdx][segIdx]);
-            }
+            sequence[bwIdx].push(this.segments[bwIdx][segIdx]);
           }
           if (audioGroupId) {
             const audioGroupIds = Object.keys(this.audioSegments);
