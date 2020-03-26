@@ -405,7 +405,7 @@ class HLSVod {
       }
 
       let length = this.segments[bw].length;
-      while (this.segments[bw][segIdx] && segIdx != length) {
+      while (bw &&this.segments[bw][segIdx] && segIdx != length) {
         if (!this.segments[bw][segIdx].discontinuity) {
           duration += this.segments[bw][segIdx].duration;
         }
