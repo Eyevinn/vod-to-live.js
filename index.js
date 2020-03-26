@@ -372,7 +372,7 @@ class HLSVod {
         }
       });
       toRemove.map(bw => { 
-        this.segments[bw] = null;
+        delete this.segments[bw];
       });
       resolve();
     });
