@@ -1062,6 +1062,23 @@ describe("Two short HLSVods", () => {
     })
   });
 
+  it("provides a correct mediasequence when loading a VOD shorter than 1 min", done => {
+    let longVod = new HLSVod('http://mock.com/mock.m3u8');
+    let shortVod = new HLSVod('http://mock.com/mock.m3u8');
+
+    longVod.load(mockMasterManifest[3], mockMediaManifest[3])
+    .then(() => {
+      return shortVod.loadAfter(longVod, mockMasterManifest[0], mockMediaManifest[0]);
+    })
+    .then(() => {
+      const segsShortVod_0 = shortVod.getLiveMediaSequenceSegments(0);
+      expect(segsShortVod_0['1010931'][segsShortVod_0['1010931'].length - 2].discontinuity).toBe(true);
+      expect(segsShortVod_0['1010931'][segsShortVod_0['1010931'].length - 1].uri).toEqual('http://mock.com/1010931/seg-1-v1-a1.ts');
+      done();
+    });
+
+  });
+
   it("provides a correct mediasequence when first VOD has no discontinuity and longer than 1 min", done => {
     let mockVod1 = new HLSVod('http://mock.com/mock.m3u8');
     let mockVod2 = new HLSVod('http://mock.com/mock2.m3u8');
