@@ -318,8 +318,8 @@ class HLSVod {
       const lastMediaSequence = this.previousVod.getLiveMediaSequenceSegments(previousVodSeqCount - 1)[bw];
       if (!lastMediaSequence) {
         // should not happen, debug
-        debug(`Failed to get lastMediaSequence: previousVodSeqCount=${previousVodSeqCount}, bw=${bw}`);
-        debug(this.previousVod.getLiveMediaSequenceSegments(previousVodSeqCount - 1));
+        console.error(`Failed to get lastMediaSequence: previousVodSeqCount=${previousVodSeqCount}, bw=${bw}`);
+        console.error(this.previousVod.getLiveMediaSequenceSegments(previousVodSeqCount - 1));
       }
       if (!this.segments[bw]) {
         this.segments[bw] = [];
@@ -328,8 +328,8 @@ class HLSVod {
         let q = lastMediaSequence[idx];
         if (!q) {
           // should not happen, debug
-          debug(`Failed to get segment from lastMediaSequence[${idx}]`);
-          debug(lastMediaSequence);
+          console.error(`Failed to get segment from lastMediaSequence[${idx}]`);
+          console.error(lastMediaSequence);
         }
         this.segments[bw].push(q);
       }
@@ -399,7 +399,11 @@ class HLSVod {
             if (!sequence[bwIdx]) {
               sequence[bwIdx] = [];
             }
-          
+            if (!this.segments[bwIdx][segIdx]) {
+              // Should not happen, debug
+              console.error(`The this.segments[bwIdx=${bwIdx}][segIdx=${segIdx}] is undefined`);
+              console.error(this.segments[bwIdx]);
+            }
             sequence[bwIdx].push(this.segments[bwIdx][segIdx]);
           }
           if (audioGroupId) {
