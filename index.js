@@ -387,7 +387,8 @@ class HLSVod {
         });
       }
 
-      while (this.segments[bw][segIdx] && segIdx != this.segments[bw].length) {
+      let length = this.segments[bw].length;
+      while (this.segments[bw][segIdx] && segIdx != length) {
         if (!this.segments[bw][segIdx].discontinuity) {
           duration += this.segments[bw][segIdx].duration;
         }
@@ -399,10 +400,22 @@ class HLSVod {
             if (!sequence[bwIdx]) {
               sequence[bwIdx] = [];
             }
+            // if (this.segments[bwIdx].length < length) {
+            //   length = this.segments[bwIdx].length;
+            // }
+            if (this.segments[bw].length != this.segments[bwIdx].length) {
+              console.error(`bw=${bw}.length=${this.segments[bw].length} != bw=${bwIdx}.length=${this.segments[bwIdx].length}`);
+              console.error(Object.keys(this.segments));
+              console.error(bandwidths);
+            }
+
             if (!this.segments[bwIdx][segIdx]) {
               // Should not happen, debug
               console.error(`The this.segments[bwIdx=${bwIdx}][segIdx=${segIdx}] is undefined`);
               console.error(this.segments[bwIdx]);
+              if (segIdx > 0) {
+                console.error(this.segments[bwIdx][segIdx - 1]);
+              }
             }
             sequence[bwIdx].push(this.segments[bwIdx][segIdx]);
           }
