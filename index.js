@@ -340,16 +340,6 @@ class HLSVod {
       this.segments[bw].push({
         discontinuity: true
       });
-
-      // Remove all double discontinuities
-      this.segments[bw] = this.segments[bw].filter((elem, idx, arr) => {
-        if (idx > 0) {
-          if (arr[idx - 1].discontinuity) {
-            return false;
-          }
-        }
-        return true;
-      });
     }
 
     const audioGroups = this.previousVod.getAudioGroups();
@@ -381,6 +371,22 @@ class HLSVod {
 
       const audioGroupId = this._getFirstAudioGroupWithSegments();
       let audioSequence = {};
+
+      // Remove all double discontinuities
+      const bandwidths = Object.keys(this.segments);
+      for (let i = 0; i < bandwidths.length; i++) {
+        const bwIdx = bandwidths[i];
+
+        this.segments[bwIdx] = this.segments[bwIdx].filter((elem, idx, arr) => {
+          if (idx > 0) {
+            if (arr[idx - 1].discontinuity && arr[idx].discontinuity) {
+              return false;
+            }
+          }
+          return true;
+        });
+      }
+
       while (this.segments[bw][segIdx] && segIdx != this.segments[bw].length) {
         if (!this.segments[bw][segIdx].discontinuity) {
           duration += this.segments[bw][segIdx].duration;
