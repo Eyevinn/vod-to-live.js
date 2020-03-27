@@ -560,7 +560,7 @@ class HLSVod {
             } else {
               segmentUri = url.resolve(baseUrl, playlistItem.properties.uri);
             }
-            if (playlistItem.properties.discontinuity) {
+            if (this.segments[bw] && playlistItem.properties.discontinuity) {
               this.segments[bw].push({
                 discontinuity: true
               });
@@ -586,7 +586,7 @@ class HLSVod {
                     discontinuity: false
                   }
 
-                  this.segments[bw].push(q);
+                  if(this.segments[bw]) this.segments[bw].push(q);
                   position += q.duration;
                   timelinePosition += (q.duration * 1000);
                 });
@@ -594,9 +594,11 @@ class HLSVod {
                   // Only insert discontinuity after ad segments if this break is not at the end
                   // of the segment list
                   debug(`Inserting discontinuity after ad segments`);                  
-                  this.segments[bw].push({
-                    discontinuity: true
-                  });
+                  if(this.segments[bw]) {
+                    this.segments[bw].push({
+                      discontinuity: true
+                    });
+                  }
                 }
               }
               spliceIdx++;
