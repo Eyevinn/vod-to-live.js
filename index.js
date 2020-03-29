@@ -518,6 +518,11 @@ class HLSVod {
       }
       let timelinePosition = 0;
 
+      if (!this.segments[bw]) {
+        console.error(`Unable to find bw=${bw} in previous VOD: ${Object.keys(this.segments)}. Will reinitiate`);
+        this.segments[bw] = [];
+      }
+
       parser.on('m3u', m3u => {
         if (!this.segmentsInitiated[bw]) {
           let position = 0;
@@ -560,7 +565,7 @@ class HLSVod {
             } else {
               segmentUri = url.resolve(baseUrl, playlistItem.properties.uri);
             }
-            if (this.segments[bw] && playlistItem.properties.discontinuity) {
+            if (playlistItem.properties.discontinuity) {
               this.segments[bw].push({
                 discontinuity: true
               });
@@ -586,7 +591,7 @@ class HLSVod {
                     discontinuity: false
                   }
 
-                  if(this.segments[bw]) this.segments[bw].push(q);
+                  this.segments[bw].push(q);
                   position += q.duration;
                   timelinePosition += (q.duration * 1000);
                 });
@@ -594,11 +599,9 @@ class HLSVod {
                   // Only insert discontinuity after ad segments if this break is not at the end
                   // of the segment list
                   debug(`Inserting discontinuity after ad segments`);                  
-                  if(this.segments[bw]) {
-                    this.segments[bw].push({
-                      discontinuity: true
-                    });
-                  }
+                  this.segments[bw].push({
+                    discontinuity: true
+                  });
                 }
               }
               spliceIdx++;
