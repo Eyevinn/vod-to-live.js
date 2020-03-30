@@ -404,7 +404,7 @@ class HLSVod {
         });
       }
 
-      let length = this.segments[bw].length;
+      let length = bw && this.segments[bw] ? this.segments[bw].length : 0;
       while (bw &&this.segments[bw][segIdx] && segIdx != length) {
         if (!this.segments[bw][segIdx].discontinuity) {
           duration += this.segments[bw][segIdx].duration;
