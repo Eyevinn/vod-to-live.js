@@ -439,6 +439,12 @@ class HLSVod {
           }
           segIdx++;
         } else {
+          //debug(`Pushing seq=${this.mediaSequences.length} firstSeg=${sequence[Object.keys(this.segments)[0]][0].uri}`);
+          if (sequence[Object.keys(this.segments)[0]][0].discontinuity) {
+            // If first element in the sequence is a discontinuity we need to 'skip' the following element that
+            // contains the segment uri and is the actual playlist item to roll over the top.
+            segOffset++;
+          }
           duration = 0;
           this.mediaSequences.push({
             segments: sequence,

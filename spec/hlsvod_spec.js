@@ -1,5 +1,7 @@
 const HLSVod = require('../index.js');
 const fs = require('fs');
+const m3u8 = require('@eyevinn/m3u8');
+const Readable = require('stream').Readable;
 
 describe("HLSVod standalone", () => {
   let mockMasterManifest;
@@ -164,6 +166,48 @@ describe("HLSVod after another VOD", () => {
       done();
     });
   });
+
+  it("never contains duplicate segments for two consecutive media sequences",  async (done) => {
+    mockVod = new HLSVod('http://mock.com/mock.m3u8');
+    mockVod2 = new HLSVod('http://mock.com/mock2.m3u8');
+    mockVod.load(mockMasterManifest, mockMediaManifest)
+    .then(() => {
+      return mockVod2.loadAfter(mockVod, mockMasterManifest, mockMediaManifest);
+    }).then(async () => {
+      let promises = [];
+      let count = mockVod2.getLiveMediaSequencesCount();
+      count = 7;
+      for (let i = 0; i < count; i++) {
+        promises.push(() => {
+          return new Promise((resolve, reject) => {
+            const manifest = mockVod2.getLiveMediaSequences(0, '2497000', i);
+            const parser = m3u8.createStream();
+            let manifestStream = new Readable();
+            manifestStream.push(manifest);
+            manifestStream.push(null)
+            manifestStream.pipe(parser);
+            parser.on('m3u', m3u => {
+              const firstItem = m3u.items.PlaylistItem[0];
+              resolve({ uri: firstItem.get('uri'), manifest: manifest });
+            });
+          })
+        });
+      }
+      let lastUri = null;
+      let lastManifest = null;
+      for (promiseFn of promises) {
+        const res = await promiseFn();
+        if (lastUri && res.uri === lastUri) {
+          console.error(lastManifest);
+          console.error(res.manifest);
+          fail(`${res.uri} was included in last media sequence ${lastUri}`);
+        }
+        lastUri = res.uri;
+        lastManifest = res.manifest;
+      }
+      done();
+    });
+  });
 });
 
 describe("HLSVod with ad splicing", () => {
@@ -202,11 +246,11 @@ describe("HLSVod with ad splicing", () => {
       let seqSegments = mockVod.getLiveMediaSequenceSegments(0);
       expect(seqSegments['2497000'][1].discontinuity).toBe(true);
       seqSegments = mockVod.getLiveMediaSequenceSegments(18);
-      expect(seqSegments['2497000'][5].discontinuity).toBe(true);
-      expect(seqSegments['2497000'][6].duration).toBe(3);
-      expect(seqSegments['2497000'][6].uri).toBe('ad11.ts');
+      expect(seqSegments['2497000'][3].discontinuity).toBe(true);
+      expect(seqSegments['2497000'][4].duration).toBe(3);
+      expect(seqSegments['2497000'][4].uri).toBe('ad11.ts');
       seqSegments = mockVod.getLiveMediaSequenceSegments(20);
-      expect(seqSegments['2497000'][7].discontinuity).toBe(true);
+      expect(seqSegments['2497000'][5].discontinuity).toBe(true);
       done();
     });
   });
@@ -1114,7 +1158,7 @@ describe("Two short HLSVods", () => {
     }).then(() => {
       expect(mockVod1.getLiveMediaSequencesCount()).toEqual(1);
       expect(mockVod2.getLiveMediaSequencesCount()).toEqual(1);
-      expect(mockVod3.getLiveMediaSequencesCount()).toEqual(14);
+      expect(mockVod3.getLiveMediaSequencesCount()).toEqual(12);
 
       const seqSegments2_0 = mockVod2.getLiveMediaSequenceSegments(0);
       const seqSegments3_0 = mockVod3.getLiveMediaSequenceSegments(0);
