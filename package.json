@@ -1,6 +1,6 @@
 {
   "name": "vod-to-live.js",
-  "version": "0.11.0",
+  "version": "0.11.1",
   "description": "HLS VOD to HLS Live",
   "repository": "https://github.com/Eyevinn/vod-to-live.js",
   "main": "index.js",
