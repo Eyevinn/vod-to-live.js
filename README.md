@@ -1,3 +1,9 @@
+# DEPRECATED
+
+This library is replaced by the `hls-vodtolive` library: https://github.com/Eyevinn/hls-vodtolive
+
+--
+
 Node library for the conversion of HLS VOD to HLS Live
 
 A library that is used to slice on-demand audio and video packaged in Apple HLS streaming format
